@@ -36,7 +36,7 @@ public class ProductServiceImpl implements ProductService {
 
     // 존재하는 회원인지 판별
     if (memberId == null) {
-      throw CustomException.of(ExceptionCode.USER_NOT_FOUND);
+      throw CustomException.from(ExceptionCode.USER_NOT_FOUND);
     }
 
     // 상품 정보 저장
