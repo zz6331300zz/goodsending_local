@@ -25,7 +25,7 @@ public class S3Uploader {
   private final AmazonS3 amazonS3;
   private final String bucket;
 
-  public S3Uploader(AmazonS3 amazonS3, @Value("${S3_BUCKET_NAME}") String bucket) {
+  public S3Uploader(AmazonS3 amazonS3, @Value("${cloud.aws.s3.bucket}") String bucket) {
     this.amazonS3 = amazonS3;
     this.bucket = bucket;
   }
