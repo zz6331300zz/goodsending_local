@@ -68,7 +68,7 @@ public class S3Uploader {
       }
     } catch (IOException e) {
       log.error("파일 생성 실패 : {}", e.getMessage());
-      throw CustomException.of(ExceptionCode.FILE_UPLOAD_FAILED);
+      throw CustomException.from(ExceptionCode.FILE_UPLOAD_FAILED);
     }
 
     // MultipartFile 데이터를 File 에 쓰기
@@ -76,14 +76,14 @@ public class S3Uploader {
       fos.write(file.getBytes());
     } catch (MaxUploadSizeExceededException e) { // 파일 용량 초과
       log.error("파일 용량 초과 : {}", e.getMessage());
-      throw CustomException.of(ExceptionCode.FILE_SIZE_EXCEEDED);
+      throw CustomException.from(ExceptionCode.FILE_SIZE_EXCEEDED);
     } catch (IOException e) {
       if (e.getMessage().contains("No space left on device")) {
         log.error("디스크 공간 부족 : {}", e.getMessage());
-        throw CustomException.of(ExceptionCode.LOW_DISK_SPACE); // 디스크 공간 부족
+        throw CustomException.from(ExceptionCode.LOW_DISK_SPACE); // 디스크 공간 부족
       } else {
         log.error("파일 업로드 실패 : {}", e.getMessage());
-        throw CustomException.of(ExceptionCode.FILE_UPLOAD_FAILED); // 파일 업로드 실패
+        throw CustomException.from(ExceptionCode.FILE_UPLOAD_FAILED); // 파일 업로드 실패
       }
     }
 
