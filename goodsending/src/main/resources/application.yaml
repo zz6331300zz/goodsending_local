@@ -11,6 +11,18 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${IAM_ACCESS_KEY}
+      secret-key: ${IAM_SECRET_KEY}
+    region:
+      static: ${S3_BUCKET_REGION}
+    stack:
+      auto: false
+    s3:
+      bucket: ${S3_BUCKET_NAME}
 ---
 spring:
   jwt:
