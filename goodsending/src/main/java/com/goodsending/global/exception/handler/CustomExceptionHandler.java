@@ -1,6 +1,7 @@
 package com.goodsending.global.exception.handler;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import com.goodsending.global.exception.CustomException;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -49,14 +51,13 @@ public class CustomExceptionHandler {
     return ResponseEntity.status(status).body(ExceptionResponse.of(status, errorMessage(e)));
   }
 
-  // TODO: security 적용후 주석 제거
-//  @ExceptionHandler(AuthorizationDeniedException.class)
-//  public ResponseEntity<ApiResponse<Void>> handleException(
-//      AuthorizationDeniedException e, HttpServletRequest request) {
-//    HttpStatus status = FORBIDDEN;
-//    log(e, request, status);
-//    return ResponseEntity.status(status).body(ApiResponse.of(status, e));
-//  }
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ExceptionResponse> handleException(
+      AuthorizationDeniedException e, HttpServletRequest request) {
+    HttpStatus status = FORBIDDEN;
+    log(e, request, status);
+    return ResponseEntity.status(status).body(ExceptionResponse.of(status, e));
+  }
 
   private static void log(Exception e, HttpServletRequest request, HttpStatus status) {
     log.error("{}:{}:{}:{}", request.getRequestURI(), status.value(), e.getClass().getSimpleName(),
