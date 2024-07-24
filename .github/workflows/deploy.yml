@@ -11,14 +11,19 @@ jobs:
     steps:
       - name: SSH로 EC2에 접속하기
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }}
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
           username: ${{ secrets.DEV_EC2_USERNAME }}
           key: ${{ secrets.DEV_EC2_PRIVATE_KEY }}
+          envs: APPLICATION_PROPERTIES
           script_stop: true
           script: |
             cd /home/ubuntu/goodsending-be/goodsending
-            git pull origin main
+            rm -rf src/main/resources/application.yaml
+            git pull origin dev
+            echo "$APPLICATION_PROPERTIES" > src/main/resources/application.yaml
             ./gradlew clean build
             sudo fuser -k -n tcp 8080 || true  
             nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &

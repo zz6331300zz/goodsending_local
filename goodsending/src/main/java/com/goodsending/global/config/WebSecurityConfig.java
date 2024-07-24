@@ -64,7 +64,7 @@ public class WebSecurityConfig {
         authorizeHttpRequests
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
             .permitAll() // resources 접근 허용 설정
-            .requestMatchers("/api/members/signup").permitAll()
+            .requestMatchers("/api/members/signup", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             //.requestMatchers("/").permitAll() // 메인 페이지 요청 허가
             .anyRequest().authenticated() // 그 외 모든 요청 인증처리
     );
