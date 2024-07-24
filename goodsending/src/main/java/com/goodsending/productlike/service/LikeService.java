@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class LikeService {
+
   private final LikeRepository likeRepository;
   private final MemberRepository memberRepository;
   private final ProductRepository productRepository;
@@ -37,45 +38,32 @@ public class LikeService {
     Member member = findMemberById(memberId);
     Product product = findProductById(likeRequestDto.getProductId());
     boolean isClicked = likeRequestDto.isClicked();
-    Optional<Like> like = likeRepository.findLikeByMemberAndProduct(member,
-        product);
-    boolean existLike = like.isPresent();
+    Like like = likeRepository.findLikeByMemberAndProduct(member,
+        product).orElseThrow(() -> CustomException.from(ExceptionCode.MEMBER_NOT_FOUND));
 
-    if (existLike && isClicked) {
-        deleteLike(product, like);
-        countLike(product);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-      }
+    if (like != null && isClicked) {
+      likeRepository.delete(like);
+      countLike(product);
+      return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-    if (!existLike && !isClicked){
-
-      addLike(product, member);
+    if (like == null && !isClicked) {
+      likeRepository.save(new Like(product, member));
       countLike(product);
       return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    if(!existLike){
-      throw CustomException.from(ExceptionCode.USER_NOT_FOUND);
+    if (like == null) {
+      throw CustomException.from(ExceptionCode.LIKE_NOT_FOUND);
     }
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
-  private void addLike(Product product, Member member) {
-    likeRepository.save(new Like(product, member));
-  }
 
-  @Transactional
-  public void countLike(Product product) {
+  private void countLike(Product product) {
     Long likeCount = likeRepository.countByProduct(product);
     product.setLikeCount(likeCount);
-  }
-
-  private void deleteLike(Product product, Optional<Like> like) {
-    if (product.getLikeCount() == null || product.getLikeCount() <= 0) {
-      throw CustomException.from(ExceptionCode.CANNOT_DECREASE_LIKE_COUNT);
-    }
-    likeRepository.delete(like.get());
   }
 
   private Product findProductById(Long productId) {
