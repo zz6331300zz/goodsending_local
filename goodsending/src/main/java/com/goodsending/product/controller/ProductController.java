@@ -1,5 +1,6 @@
 package com.goodsending.product.controller;
 
+import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.service.ProductService;
@@ -26,7 +27,7 @@ public class ProductController {
   public ResponseEntity<ProductCreateResponseDto> createProduct(
       @RequestPart("requestDto") @Valid ProductCreateRequestDto requestDto,
       @RequestPart("productImages") List<MultipartFile> productImages,
-      @RequestPart("memberId") Long memberId) {
+      @MemberId(required = true) Long memberId) {
     LocalDateTime currentTime = LocalDateTime.now();
     ProductCreateResponseDto responseDto = productService.createProduct(requestDto, productImages,
         currentTime, memberId);
