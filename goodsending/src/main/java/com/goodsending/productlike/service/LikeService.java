@@ -37,33 +37,32 @@ public class LikeService {
 
     Member member = findMemberById(memberId);
     Product product = findProductById(likeRequestDto.getProductId());
-    boolean isClicked = likeRequestDto.isClicked();
-    Like like = likeRepository.findLikeByMemberAndProduct(member,
-        product).orElseThrow(() -> CustomException.from(ExceptionCode.MEMBER_NOT_FOUND));
+    boolean likeButton = likeRequestDto.isPress();
+    Like like = null;
+    Like existingLike = likeRepository.findLikeByMemberAndProduct(member,
+        product).orElse(null);
 
-    if (like != null && isClicked) {
+    if (likeButton) {
+      if (existingLike == null) {
+        like = new Like(product, member);
+        likeRepository.save(like);
+        countLike(product);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+      }
+    } else {
+      like = likeRepository.findLikeByMemberAndProduct(member,
+          product).orElseThrow(() -> CustomException.from(ExceptionCode.MEMBER_NOT_FOUND));
       likeRepository.delete(like);
       countLike(product);
       return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-
-    if (like == null && !isClicked) {
-      likeRepository.save(new Like(product, member));
-      countLike(product);
-      return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    if (like == null) {
-      throw CustomException.from(ExceptionCode.LIKE_NOT_FOUND);
-    }
-
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
-
 
   private void countLike(Product product) {
     Long likeCount = likeRepository.countByProduct(product);
     product.setLikeCount(likeCount);
+
   }
 
   private Product findProductById(Long productId) {
