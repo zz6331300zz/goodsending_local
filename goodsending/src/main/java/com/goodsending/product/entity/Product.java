@@ -1,6 +1,7 @@
 package com.goodsending.product.entity;
 
 import com.goodsending.global.entity.BaseEntity;
+import com.goodsending.member.entity.Member;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -36,20 +37,21 @@ public class Product extends BaseEntity {
   @Column(name = "bidding_count", nullable = false)
   private int biddingCount;
 
-  @Column(name = "member_id", nullable = false)
-  private Long memberId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "member_id")
+  private Member member;
 
   @Builder
   public Product(String name, int price, String introduction, LocalDateTime auctionEndDate,
-      Long memberId) {
+      Member member) {
     this.name = name;
     this.price = price;
     this.introduction = introduction;
     this.auctionEndDate = auctionEndDate;
-    this.memberId = memberId;
+    this.member = member;
   }
 
-  public static Product of(ProductCreateRequestDto requestDto, LocalDateTime currentTime, Long memberId) {
+  public static Product of(ProductCreateRequestDto requestDto, LocalDateTime currentTime, Member member) {
 
     int auctionPeriodDays = requestDto.getAuctionPeriodDays();
     LocalDateTime auctionEndDate = currentTime.plusDays(auctionPeriodDays)
@@ -63,7 +65,7 @@ public class Product extends BaseEntity {
         .price(requestDto.getPrice())
         .introduction(requestDto.getIntroduction())
         .auctionEndDate(auctionEndDate)
-        .memberId(memberId)
+        .member(member)
         .build();
   }
 }

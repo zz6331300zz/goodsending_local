@@ -11,6 +11,7 @@ import java.util.List;
 public class ProductCreateResponseDto {
 
   private final Long productId;
+  private final Long memberId;
   private final String name;
   private final int price;
   private final String introduction;
@@ -18,9 +19,10 @@ public class ProductCreateResponseDto {
   private final List<ProductImageInfoDto> productImages;
 
   @Builder
-  public ProductCreateResponseDto(Long productId, String name, int price, String introduction,
+  public ProductCreateResponseDto(Long productId, Long memberId, String name, int price, String introduction,
       LocalDateTime auctionEndDate, List<ProductImageInfoDto> productImages) {
     this.productId = productId;
+    this.memberId = memberId;
     this.name = name;
     this.price = price;
     this.introduction = introduction;
@@ -32,6 +34,7 @@ public class ProductCreateResponseDto {
       List<ProductImageInfoDto> savedProductImages) {
     return ProductCreateResponseDto.builder()
         .productId(product.getId())
+        .memberId(product.getMember().getMemberId())
         .name(product.getName())
         .price(product.getPrice())
         .introduction(product.getIntroduction())

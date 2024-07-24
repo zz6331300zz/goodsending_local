@@ -3,6 +3,8 @@ package com.goodsending.product.service;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.global.service.S3Uploader;
+import com.goodsending.member.entity.Member;
+import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductImageInfoDto;
@@ -28,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
   private final ProductRepository productRepository;
   private final ProductImageRepository productImageRepository;
   private final S3Uploader s3Uploader;
+  private final MemberRepository memberRepository;
 
   @Override
   @Transactional
@@ -35,12 +38,10 @@ public class ProductServiceImpl implements ProductService {
       List<MultipartFile> productImages, LocalDateTime currentTime, Long memberId) {
 
     // 존재하는 회원인지 판별
-    if (memberId == null) {
-      throw CustomException.from(ExceptionCode.USER_NOT_FOUND);
-    }
+    Member member = findMember(memberId);
 
     // 상품 정보 저장
-    Product product = Product.of(requestDto, currentTime, memberId);
+    Product product = Product.of(requestDto, currentTime, member);
     Product savedProduct = productRepository.save(product);
 
     // 버킷에 상품 이미지 업로드
@@ -57,5 +58,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     return ProductCreateResponseDto.of(savedProduct, savedProductImages);
+  }
+
+  private Member findMember(Long memberId) {
+    Member member = memberRepository.findById(memberId)
+        .orElseThrow(() -> CustomException.from(ExceptionCode.USER_NOT_FOUND));
+    return member;
   }
 }
