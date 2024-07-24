@@ -20,6 +20,7 @@ public enum ExceptionCode {
 
   // NOT_FOUND:404:자원없음
   USER_NOT_FOUND(NOT_FOUND, "유저 개체를 찾지 못했습니다."),
+  PRODUCT_NOT_FOUND(NOT_FOUND, "경매 상품 개체를 찾지 못했습니다."),
 
   // PAYLOAD_TOO_LARGE:413:파일 크기 초과
   FILE_SIZE_EXCEEDED(PAYLOAD_TOO_LARGE, "파일 크기가 10MB를 초과했습니다."),

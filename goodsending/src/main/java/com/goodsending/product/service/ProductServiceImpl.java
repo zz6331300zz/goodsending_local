@@ -8,6 +8,7 @@ import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductImageInfoDto;
+import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.entity.Product;
 import com.goodsending.product.entity.ProductImage;
 import com.goodsending.product.repository.ProductImageRepository;
@@ -58,6 +59,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     return ProductCreateResponseDto.of(savedProduct, savedProductImages);
+  }
+
+  @Override
+  public ProductInfoDto getProduct(Long productId) {
+
+    Product product = findProduct(productId);
+    List<ProductImage> productImageList = findProductImageList(product);
+
+    // TODO: 입찰 여부 확인 로직 구현
+
+    return ProductInfoDto.of(product, productImageList);
+  }
+
+  private List<ProductImage> findProductImageList(Product product) {
+    List<ProductImage> productImageList = productImageRepository.findAllByProduct(product);
+    return productImageList;
+  }
+
+  private Product findProduct(Long productId) {
+    Product product = productRepository.findById(productId)
+        .orElseThrow(() -> CustomException.from(ExceptionCode.PRODUCT_NOT_FOUND));
+    return product;
   }
 
   private Member findMember(Long memberId) {

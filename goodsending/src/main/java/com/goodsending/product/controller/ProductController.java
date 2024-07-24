@@ -3,6 +3,7 @@ package com.goodsending.product.controller;
 import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
+import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.service.ProductService;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
@@ -34,4 +35,9 @@ public class ProductController {
     return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
   }
 
+  @GetMapping("/{productId}")
+  public ResponseEntity<ProductInfoDto> getProduct(@PathVariable Long productId) {
+    ProductInfoDto responseDto = productService.getProduct(productId);
+    return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+  }
 }
