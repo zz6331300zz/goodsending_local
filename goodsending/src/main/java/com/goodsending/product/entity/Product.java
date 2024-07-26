@@ -37,7 +37,7 @@ public class Product extends BaseEntity {
   @Column(name = "bidding_count", nullable = false)
   private int biddingCount;
 
-  @Column(name = "like_count", nullable = false)
+  @Column(name = "like_count", nullable = true)
   private Long likeCount;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -45,11 +45,12 @@ public class Product extends BaseEntity {
   private Member member;
 
   @Builder
-  public Product(String name, int price, String introduction, LocalDateTime auctionEndDate,
+  public Product(String name, int price, String introduction, Long likeCount, LocalDateTime auctionEndDate,
       Member member) {
     this.name = name;
     this.price = price;
     this.introduction = introduction;
+    this.likeCount = likeCount == null ? 0 : likeCount;
     this.auctionEndDate = auctionEndDate;
     this.member = member;
   }

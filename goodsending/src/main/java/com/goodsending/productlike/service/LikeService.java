@@ -77,4 +77,13 @@ public class LikeService {
 
   }
 
+  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size, String sortBy, boolean isAsc) {
+    Member member = findMemberById(memberId);
+    Sort.Direction direction = isAsc ? Sort.Direction.ASC : Sort.Direction.DESC;
+    Sort sort = Sort.by(direction, sortBy);
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
+    return productList.map(ProductCreateResponseDto::new);
+  }
 }
