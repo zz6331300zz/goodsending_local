@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-  @Query("SELECT l.product "
+  @Query("SELECT p "
       + "FROM Like l "
-      + "JOIN Product p ON l.product.id = p.id "
+      + "INNER JOIN Product p ON l.product.id = p.id "
       + "WHERE l.member = :member")
   Page<Product> findLikeProductByMember(Member member, Pageable pageable);
 

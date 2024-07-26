@@ -39,11 +39,10 @@ public class LikeService {
     Product product = findProductById(likeRequestDto.getProductId());
     boolean likeButton = likeRequestDto.isPress();
     Like like = null;
-    Like existingLike = likeRepository.findLikeByMemberAndProduct(member,
-        product).orElse(null);
+    boolean existingLike = likeRepository.existsByMemberAndProduct(member,product);
 
     if (likeButton) {
-      if (existingLike == null) {
+      if (!existingLike) {
         like = new Like(product, member);
         likeRepository.save(like);
         countLike(product);
