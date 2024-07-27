@@ -16,24 +16,26 @@ public class ProductInfoDto {
   private String name;
   private int price;
   private String introduction;
-  private LocalDateTime auctionEndDate;
+  private LocalDateTime startDateTime;
+  private LocalDateTime maxEndDate;
   private int biddingCount;
   private List<ProductImageInfoDto> productImages;
   // TODO : 입찰 여부 필드
 
   @Builder
   public ProductInfoDto(Long productId, Long memberId, String name, int price, String introduction,
-      LocalDateTime auctionEndDate, int biddingCount, List<ProductImageInfoDto> productImages) {
+      LocalDateTime startDateTime, LocalDateTime maxEndDate, int biddingCount,
+      List<ProductImageInfoDto> productImages) {
     this.productId = productId;
     this.memberId = memberId;
     this.name = name;
     this.price = price;
     this.introduction = introduction;
-    this.auctionEndDate = auctionEndDate;
+    this.startDateTime = startDateTime;
+    this.maxEndDate = maxEndDate;
     this.biddingCount = biddingCount;
     this.productImages = productImages;
   }
-
 
   public static ProductInfoDto of(Product product, List<ProductImage> productImageList) {
 
@@ -49,7 +51,8 @@ public class ProductInfoDto {
         .name(product.getName())
         .price(product.getPrice())
         .introduction(product.getIntroduction())
-        .auctionEndDate(product.getAuctionEndDate())
+        .startDateTime(product.getStartDateTime())
+        .maxEndDate(product.getMaxEndDateTime())
         .biddingCount(product.getBiddingCount())
         .productImages(productImages)
         .build();
