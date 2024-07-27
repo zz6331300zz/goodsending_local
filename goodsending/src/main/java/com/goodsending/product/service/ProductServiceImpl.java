@@ -52,6 +52,12 @@ public class ProductServiceImpl implements ProductService {
   public ProductCreateResponseDto createProduct(ProductCreateRequestDto requestDto,
       List<MultipartFile> productImages, Long memberId) {
 
+    // 상품 이미지 개수 초과 판별
+    int size = productImages.size();
+    if (size > 5) {
+      throw CustomException.from(ExceptionCode.FILE_COUNT_EXCEEDED);
+    }
+
     // 존재하는 회원인지 판별
     Member member = findMember(memberId);
 
