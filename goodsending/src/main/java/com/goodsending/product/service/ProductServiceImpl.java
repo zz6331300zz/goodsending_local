@@ -7,13 +7,12 @@ import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
-import com.goodsending.product.dto.response.ProductImageInfoDto;
+import com.goodsending.product.dto.response.ProductImageCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.entity.Product;
 import com.goodsending.product.entity.ProductImage;
 import com.goodsending.product.repository.ProductImageRepository;
 import com.goodsending.product.repository.ProductRepository;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +22,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @Date : 2024. 07. 12.
+ * @Team : GoodsEnding
+ * @author : puclpu
+ * @Project : goodsending-be :: goodsending
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -33,34 +39,47 @@ public class ProductServiceImpl implements ProductService {
   private final S3Uploader s3Uploader;
   private final MemberRepository memberRepository;
 
+  /**
+   * 상품 등록
+   * @param requestDto
+   * @param productImages
+   * @param memberId
+   * @return 생성된 상품 정보 반환
+   * @author : puclpu
+   */
   @Override
   @Transactional
   public ProductCreateResponseDto createProduct(ProductCreateRequestDto requestDto,
-      List<MultipartFile> productImages, LocalDateTime currentTime, Long memberId) {
+      List<MultipartFile> productImages, Long memberId) {
 
     // 존재하는 회원인지 판별
     Member member = findMember(memberId);
 
     // 상품 정보 저장
-    Product product = Product.of(requestDto, currentTime, member);
+    Product product = Product.of(requestDto, member);
     Product savedProduct = productRepository.save(product);
 
     // 버킷에 상품 이미지 업로드
     List<String> uploadedFileNames = s3Uploader.uploadProductImageFileList(productImages, "images/products");
 
     // 업로드 된 상품의 url 저장
-    List<ProductImageInfoDto> savedProductImages = new ArrayList<>();
+    List<ProductImageCreateResponseDto> savedProductImages = new ArrayList<>();
     for (String uploadedFileName : uploadedFileNames) {
       ProductImage productImage = ProductImage.of(product, uploadedFileName);
       productImageRepository.save(productImage);
 
-      ProductImageInfoDto productImageInfoDto = ProductImageInfoDto.from(productImage);
-      savedProductImages.add(productImageInfoDto);
+      ProductImageCreateResponseDto productImageCreateResponseDto = ProductImageCreateResponseDto.from(productImage);
+      savedProductImages.add(productImageCreateResponseDto);
     }
 
     return ProductCreateResponseDto.of(savedProduct, savedProductImages);
   }
 
+  /**
+   * 선택한 경매 상품 상세 정보 조회
+   * @param productId
+   * @return 경매 상품 상세 정보 반환
+   */
   @Override
   public ProductInfoDto getProduct(Long productId) {
 
