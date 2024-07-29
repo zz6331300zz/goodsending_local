@@ -1,6 +1,6 @@
 package com.goodsending.global.security;
 
-import com.goodsending.member.dto.MemberDetailsDto;
+import com.goodsending.member.dto.response.MemberDetailsDto;
 import com.goodsending.member.type.MemberRole;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,12 +26,12 @@ public class MemberDetailsImpl implements UserDetails {
     return memberDetailsDto.getEmail();
   }
 
-  public MemberRole getRole() {
-    return memberDetailsDto.getRole();
-  }
-
   public Long getMemberId() {
     return memberDetailsDto.getMemberId();
+  }
+
+  public MemberRole getRole() {
+    return memberDetailsDto.getRole();
   }
 
   @Override

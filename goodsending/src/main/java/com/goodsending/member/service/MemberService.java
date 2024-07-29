@@ -1,6 +1,9 @@
 package com.goodsending.member.service;
 
-import com.goodsending.member.dto.SignupRequestDto;
+import com.goodsending.global.exception.CustomException;
+import com.goodsending.global.exception.ExceptionCode;
+import com.goodsending.member.dto.request.SignupRequestDto;
+import com.goodsending.member.dto.response.MemberInfoDto;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.type.MemberRole;
@@ -42,5 +45,13 @@ public class MemberService {
     Member member = Member.from(signupRequestDto, encodedPassword, role);
     memberRepository.save(member);
     return ResponseEntity.ok("가입 완료");
+  }
+
+  // 회원 정보 조회
+  public MemberInfoDto getMemberInfo(Long memberId) {
+    Optional<Member> optionalMember = memberRepository.findByMemberId(memberId);
+    Member member = optionalMember.orElseThrow(
+        () -> CustomException.from(ExceptionCode.USER_NOT_FOUND));
+    return new MemberInfoDto(member);
   }
 }

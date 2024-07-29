@@ -1,7 +1,7 @@
 package com.goodsending.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.goodsending.member.dto.LoginRequestDto;
+import com.goodsending.member.dto.request.LoginRequestDto;
 import com.goodsending.member.type.MemberRole;
 import com.goodsending.member.util.JwtUtil;
 import jakarta.servlet.FilterChain;

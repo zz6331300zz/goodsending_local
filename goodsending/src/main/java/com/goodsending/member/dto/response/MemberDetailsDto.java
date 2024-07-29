@@ -1,4 +1,4 @@
-package com.goodsending.member.dto;
+package com.goodsending.member.dto.response;
 
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.type.MemberRole;
@@ -21,4 +21,5 @@ public class MemberDetailsDto {
         member.getRole()
     );
   }
+
 }

@@ -1,7 +1,7 @@
 package com.goodsending.member.entity;
 
 import com.goodsending.global.entity.BaseEntity;
-import com.goodsending.member.dto.SignupRequestDto;
+import com.goodsending.member.dto.request.SignupRequestDto;
 import com.goodsending.member.type.MemberRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -30,10 +30,10 @@ public class Member extends BaseEntity {
   private String phoneNumber;
 
   @Column(name = "cash", nullable = true)
-  private Long cash;
+  private Integer cash;
 
   @Column(name = "point", nullable = true)
-  private Long point;
+  private Integer point;
 
   @Column(name = "code", nullable = true)
   private Long code;
