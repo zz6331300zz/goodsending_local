@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 public enum ExceptionCode {
 
   // BAD_REQUEST:400:잘못된요청
+  FILE_COUNT_EXCEEDED(BAD_REQUEST, "상품 이미지 개수가 최대 5개를 초과했습니다."),
 
   // Unauthorized:401:인증이슈
 
@@ -30,7 +31,6 @@ public enum ExceptionCode {
   // INTERNAL_SERVER_ERROR:500:서버 문제 발생
   LOW_DISK_SPACE(INTERNAL_SERVER_ERROR, "디스크 공간이 부족합니다."),
   FILE_UPLOAD_FAILED(INTERNAL_SERVER_ERROR, "파일 변환에 실패했습니다.");
-
 
   private final HttpStatus status;
   private final String message;
