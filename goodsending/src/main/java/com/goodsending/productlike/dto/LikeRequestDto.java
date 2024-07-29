@@ -6,10 +6,11 @@ import lombok.Getter;
 @Getter
 public class LikeRequestDto {
 
-    @NotNull
+    @NotNull(message = "상품Id를 입력해주세요.")
     private Long productId;
-    @NotNull
-    private boolean clicked;
+
+    @NotNull(message = "클릭 여부를 입력해주세요.")
+    private boolean press;
 
 
 }

@@ -39,11 +39,10 @@ public class LikeService {
     Product product = findProductById(likeRequestDto.getProductId());
     boolean likeButton = likeRequestDto.isPress();
     Like like = null;
-    Like existingLike = likeRepository.findLikeByMemberAndProduct(member,
-        product).orElse(null);
+    boolean existingLike = likeRepository.existsByMemberAndProduct(member,product);
 
     if (likeButton) {
-      if (existingLike == null) {
+      if (!existingLike) {
         like = new Like(product, member);
         likeRepository.save(like);
         countLike(product);
@@ -77,4 +76,13 @@ public class LikeService {
 
   }
 
+  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size, String sortBy, boolean isAsc) {
+    Member member = findMemberById(memberId);
+    Sort.Direction direction = isAsc ? Sort.Direction.ASC : Sort.Direction.DESC;
+    Sort sort = Sort.by(direction, sortBy);
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
+    return productList.map(ProductCreateResponseDto::from);
+  }
 }
