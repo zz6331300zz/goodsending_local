@@ -83,6 +83,6 @@ public class LikeService {
     Pageable pageable = PageRequest.of(page, size, sort);
 
     Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
-    return productList.map(ProductCreateResponseDto::new);
+    return productList.map(ProductCreateResponseDto::from);
   }
 }

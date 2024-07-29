@@ -49,4 +49,17 @@ public class ProductCreateResponseDto {
         .maxEndDate(product.getMaxEndDateTime())
         .build();
   }
+  public static ProductCreateResponseDto from(Product product) {
+    return ProductCreateResponseDto.builder()
+        .productId(product.getId())
+        .memberId(product.getMember().getMemberId())
+        .name(product.getName())
+        .price(product.getPrice())
+        .introduction(product.getIntroduction())
+        .likeCount(product.getLikeCount())
+        .startDateTime(product.getStartDateTime())
+        .maxEndDate(product.getMaxEndDateTime())
+        .build();
+  }
+
 }
