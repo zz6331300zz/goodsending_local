@@ -42,9 +42,6 @@ jobs:
 
       - name: SSH로 EC2에 접속하기
         uses: appleboy/ssh-action@v1.0.3
-
-      - name: SSH로 EC2에 접속하기
-        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
           username: ${{ secrets.DEV_EC2_USERNAME }}
