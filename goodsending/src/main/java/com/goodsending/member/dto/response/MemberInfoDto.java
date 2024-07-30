@@ -2,7 +2,6 @@ package com.goodsending.member.dto.response;
 
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.type.MemberRole;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

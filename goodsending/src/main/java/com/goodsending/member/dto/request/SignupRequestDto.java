@@ -16,8 +16,10 @@ public class SignupRequestDto {
   @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{8,15}$")
   private String password;
 
-  @NotBlank(message = "전화번호가 입력되지 않았습니다.")
-  private String phoneNumber;
+  @NotBlank(message = "비밀번호가 입력되지 않았습니다.")
+  private String confirmPassword; // DB x, 단순 체크 용
+
+  private String code;
 
   // TODO : 관리자 할 경우 adminToken
   //private String adminToken = "";

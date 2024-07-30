@@ -3,6 +3,7 @@ package com.goodsending.global.config;
 import com.goodsending.global.security.JwtAuthenticationFilter;
 import com.goodsending.global.security.JwtAuthorizationFilter;
 import com.goodsending.global.security.MemberDetailsServiceImpl;
+import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -26,6 +27,7 @@ public class WebSecurityConfig {
   private final JwtUtil jwtUtil;
   private final MemberDetailsServiceImpl memberDetailsService;
   private final AuthenticationConfiguration authenticationConfiguration;
+  private final MemberRepository memberRepository;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -40,7 +42,7 @@ public class WebSecurityConfig {
 
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-    JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtUtil);
+    JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtUtil, memberRepository);
     filter.setAuthenticationManager(authenticationManager(authenticationConfiguration));
     return filter;
   }
@@ -64,15 +66,25 @@ public class WebSecurityConfig {
         authorizeHttpRequests
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
             .permitAll() // resources 접근 허용 설정
-            .requestMatchers("/api/members/signup", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-            //.requestMatchers("/").permitAll() // 메인 페이지 요청 허가
+            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+            .requestMatchers("/api/members/**").permitAll()
+            //.requestMatchers("/").permitAll()
             .anyRequest().authenticated() // 그 외 모든 요청 인증처리
     );
 
     http.formLogin((formLogin) ->
         formLogin
+            // 로그인 View 제공 (GET)
+            //.loginPage("/api/members/login-page")
             // 로그인 처리 (POST)
-            .loginProcessingUrl("/api/members/login").permitAll()
+            .loginProcessingUrl("/api/members/login")
+            // 로그인 처리 후 성공 시 URL
+            //.defaultSuccessUrl("/")
+            // 로그인 처리 후 실패 시 URL
+            //.failureUrl("/api/members/login-page?error")
+            .permitAll()
+
+
     );
 
     // 필터 관리

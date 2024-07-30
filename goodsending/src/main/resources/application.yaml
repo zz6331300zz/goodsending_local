@@ -16,6 +16,18 @@ spring:
   sql:
     init:
       mode: never
+  mail:
+    host: smtp.naver.com
+    port: 465
+    username: ${YOUR_NAVER_EMAIL}
+    password: ${YOUR_NAVER_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+            trust: smtp.naver.com
 cloud:
   aws:
     credentials:
