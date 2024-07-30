@@ -16,6 +16,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -78,9 +80,13 @@ public class Member extends BaseEntity {
         .verify(verify)
         .build();
   }
-
+ // TODO : redis 사용하면 삭제 될 예정
   public void update(String encodedPassword, boolean verify) {
     this.password = encodedPassword;
     this.verify = verify;
+  }
+
+  public void passwordUpdate(String encodedPassword) {
+    this.password = encodedPassword;
   }
 }
