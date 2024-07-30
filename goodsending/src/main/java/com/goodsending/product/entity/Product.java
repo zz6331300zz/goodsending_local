@@ -6,6 +6,7 @@ import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.type.AuctionTime;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,6 +52,9 @@ public class Product extends BaseEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "member_id")
   private Member member;
+
+  @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  private List<ProductImage> productImages;
 
   @Builder
   public Product(Long id, String name, int price, String introduction, LocalDateTime startDateTime,
