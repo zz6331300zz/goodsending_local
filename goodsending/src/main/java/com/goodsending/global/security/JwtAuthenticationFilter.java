@@ -1,13 +1,18 @@
 package com.goodsending.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.goodsending.member.dto.LoginRequestDto;
+import com.goodsending.global.exception.CustomException;
+import com.goodsending.global.exception.ExceptionCode;
+import com.goodsending.member.dto.request.LoginRequestDto;
+import com.goodsending.member.entity.Member;
+import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.type.MemberRole;
 import com.goodsending.member.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,9 +25,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
   private final JwtUtil jwtUtil;
+  private final MemberRepository memberRepository;
 
-  public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+  public JwtAuthenticationFilter(JwtUtil jwtUtil, MemberRepository memberRepository) {
     this.jwtUtil = jwtUtil;
+    this.memberRepository = memberRepository;
     setFilterProcessesUrl("/api/members/login");
   }
 
@@ -33,14 +40,24 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     try {
       LoginRequestDto requestDto = new ObjectMapper().readValue(request.getInputStream(),
           LoginRequestDto.class);
-
-      return getAuthenticationManager().authenticate(
-          new UsernamePasswordAuthenticationToken(
-              requestDto.getEmail(),
-              requestDto.getPassword(),
-              null
-          )
-      );
+      // 이메일을 통해 사용자 정보를 조회합니다.
+      Optional<Member> optionalMember = memberRepository.findByEmail(requestDto.getEmail());
+      if (optionalMember.isPresent()) {
+        Member member = optionalMember.get();
+        if (member.isVerify()) { //인증 상태가 true 이면
+          return getAuthenticationManager().authenticate(
+              new UsernamePasswordAuthenticationToken(
+                  requestDto.getEmail(),
+                  requestDto.getPassword(),
+                  null
+              )
+          );
+        } else {
+          throw CustomException.from(ExceptionCode.EMAIL_NOT_VERIFIED);
+        }
+      } else {
+        throw CustomException.from(ExceptionCode.USER_NOT_FOUND);
+      }
     } catch (IOException e) {
       log.error(e.getMessage());
       throw new RuntimeException(e.getMessage());
@@ -52,10 +69,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       HttpServletResponse response, FilterChain chain, Authentication authResult)
       throws IOException, ServletException {
     log.info("로그인 성공 및 JWT 생성");
-    String email = ((MemberDetailsImpl) authResult.getPrincipal()).getUsername();
-    MemberRole role = ((MemberDetailsImpl) authResult.getPrincipal()).getRole();
+    MemberDetailsImpl memberDetails = (MemberDetailsImpl) authResult.getPrincipal();
+    Long memberId = memberDetails.getMemberId();
+    String email = memberDetails.getUsername();
+    MemberRole role = memberDetails.getRole();
 
-    String token = jwtUtil.createToken(email, role);
+    String token = jwtUtil.createToken(memberId, email, role);
     response.addHeader(JwtUtil.AUTHORIZATION_HEADER, token);
     response.setContentType("text/plain;charset=UTF-8");
     response.getWriter().write("로그인 성공");

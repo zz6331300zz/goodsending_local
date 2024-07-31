@@ -22,6 +22,8 @@ public class JwtUtil {
   public static final String AUTHORIZATION_HEADER = "Authorization";
   // 사용자 권한 값의 KEY
   public static final String AUTHORIZATION_KEY = "auth";
+  // 사용자 식별자 값의 KEY
+  public static final String MEMBER_ID_KEY = "memberId";
   // Token 식별자
   public static final String BEARER_PREFIX = "Bearer ";
   // 토큰 만료시간
@@ -43,12 +45,13 @@ public class JwtUtil {
   }
 
   // 토큰 생성
-  public String createToken(String email, MemberRole role) {
+  public String createToken(Long memberId, String email, MemberRole role) {
     Date date = new Date();
 
     return BEARER_PREFIX +
         Jwts.builder()
             .setSubject(email) // 사용자 식별자값(ID)
+            .claim(MEMBER_ID_KEY, memberId) // 사용자 ID 추가
             .claim(AUTHORIZATION_KEY, role) // 사용자 권한
             .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
             .setIssuedAt(date) // 발급일

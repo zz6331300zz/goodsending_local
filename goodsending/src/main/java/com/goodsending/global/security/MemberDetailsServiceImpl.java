@@ -1,9 +1,8 @@
 package com.goodsending.global.security;
 
-import com.goodsending.member.dto.MemberDetailsDto;
+import com.goodsending.member.dto.response.MemberDetailsDto;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
-import java.lang.ProcessBuilder.Redirect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
