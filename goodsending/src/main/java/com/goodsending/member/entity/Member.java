@@ -96,6 +96,7 @@ public class Member extends BaseEntity {
 
   public void cashUpdate(Integer cash) {
     this.cash = cash;
+  }
     
   public boolean isCashGreaterOrEqualsThan(Integer amount){
     if (this.cash == null || amount == null) {
