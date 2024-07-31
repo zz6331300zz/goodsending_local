@@ -6,13 +6,12 @@ import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.type.AuctionTime;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "products")
@@ -40,6 +39,7 @@ public class Product extends BaseEntity {
   @Column(name = "max_end_date_time", nullable = true)
   private LocalDateTime maxEndDateTime;
 
+  // dynamicEndDateTime은 낙찰자가 정해졌을 때 입력되는 값이다.
   @Column(name = "dynamic_end_date_time")
   private LocalDateTime dynamicEndDateTime;
 
@@ -55,6 +55,9 @@ public class Product extends BaseEntity {
 
   @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   private List<ProductImage> productImages;
+
+  @Version
+  private Long version;
 
   @Builder
   public Product(Long id, String name, int price, String introduction, LocalDateTime startDateTime,
@@ -89,4 +92,19 @@ public class Product extends BaseEntity {
     this.likeCount = likeCount;
   }
 
+
+  public boolean isPriceGreaterOrEqualsThan(Integer amount) {
+    if (amount == null) {
+      return false;
+    }
+    return this.price >= amount;
+  }
+
+  public void setBiddingCount(Long biddingCount) {
+    if(biddingCount == null) {
+      this.biddingCount = 0;
+      return;
+    }
+    this.biddingCount = (int)biddingCount.longValue();
+  }
 }
