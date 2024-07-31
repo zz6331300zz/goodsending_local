@@ -2,6 +2,7 @@ package com.goodsending.member.service;
 
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
+import com.goodsending.member.dto.request.CashRequestDto;
 import com.goodsending.member.dto.request.PasswordRequestDto;
 import com.goodsending.member.dto.request.SignupRequestDto;
 import com.goodsending.member.dto.response.MemberInfoDto;
@@ -102,6 +103,9 @@ public class MemberService {
       throw CustomException.from(ExceptionCode.MEMBER_ID_MISMATCH);
     }
     Member member = findByMemberId(memberId);
+    if (member == null) {
+      throw CustomException.from(ExceptionCode.MEMBER_NOT_FOUND);
+    }
     // DB에 있는 비밀번호와 현재 비밀번호 일치하는지 확인
     if (!passwordEncoder.matches(passwordRequestDto.getCurrentPassword(), member.getPassword())) {
       throw CustomException.from(ExceptionCode.MEMBER_PASSWORD_INCORRECT);
@@ -113,6 +117,31 @@ public class MemberService {
     // 비밀번호 암호화
     String encodedPassword = passwordEncoder.encode(passwordRequestDto.getPassword());
     member.passwordUpdate(encodedPassword);
+    return ResponseEntity.status(HttpStatus.OK).build();
+  }
+
+  /**
+   * 캐시 충전
+   * <p>
+   * 로그인 한 회원은 입력한 금액 만큼 캐시를 충전 할 수 있다.
+   *
+   * @param 로그인 한 회원 memberId, CashRequestDto
+   * @return status 상태코드 반환합니다.
+   * @author : 이아람
+   */
+  @Transactional
+  public ResponseEntity<Void> updateCash(Long pathMemberId, Long memberId,
+      CashRequestDto cashRequestDto) {
+    if (!pathMemberId.equals(memberId)) {
+      throw CustomException.from(ExceptionCode.MEMBER_ID_MISMATCH);
+    }
+    Member member = findByMemberId(memberId);
+    if (member == null) {
+      throw CustomException.from(ExceptionCode.MEMBER_NOT_FOUND);
+    }
+    // DB에서 가져온 cash 값이 null인 경우 0으로 처리
+    Integer currentCash = (member.getCash() != null) ? member.getCash() : 0;
+    member.cashUpdate(cashRequestDto.getCash() + currentCash);
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 

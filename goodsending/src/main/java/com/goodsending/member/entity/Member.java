@@ -94,6 +94,9 @@ public class Member extends BaseEntity {
     this.password = encodedPassword;
   }
 
+  public void cashUpdate(Integer cash) {
+    this.cash = cash;
+    
   public boolean isCashGreaterOrEqualsThan(Integer amount){
     if (this.cash == null || amount == null) {
       return false;
