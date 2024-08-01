@@ -11,8 +11,8 @@ import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.entity.Like;
 import com.goodsending.productlike.repository.LikeRepository;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -84,5 +84,10 @@ public class LikeService {
 
     Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
     return productList.map(ProductCreateResponseDto::from);
+  }
+
+  public List<Product> getTop5LikedProduct() {
+    LocalDateTime now = LocalDateTime.now();
+    return productRepository.findTop5ByOrderByLikeCountDesc(now);
   }
 }

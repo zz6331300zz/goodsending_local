@@ -6,7 +6,9 @@ import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.service.LikeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -44,4 +46,14 @@ public class LikeController {
     return ResponseEntity.ok(
         likeService.getLikeProductsPage(memberId, page - 1, size, sortBy, isAsc));
   }
+
+  @Operation(summary = "찜하기 수 top5 상품 조회", description = "찜하기 수 top5 상품조회 한다.")
+  @GetMapping("/likes/top5")
+  public ResponseEntity<List<ProductCreateResponseDto>> getTop5LikedProduct(
+  ) {
+    return ResponseEntity.ok(
+        likeService.getTop5LikedProduct().stream().map(ProductCreateResponseDto::from).toList());
+  }
+
+
 }

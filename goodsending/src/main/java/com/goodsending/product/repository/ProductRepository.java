@@ -2,10 +2,13 @@ package com.goodsending.product.repository;
 
 import com.goodsending.member.entity.Member;
 import com.goodsending.product.entity.Product;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, ProductCustomRepository {
 
@@ -15,3 +18,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
       + "WHERE l.member = :member")
   Page<Product> findLikeProductByMember(Member member, Pageable pageable);
 
+  @Query(value = "SELECT * FROM products WHERE start_date_time > :currentDateTime ORDER BY like_count DESC LIMIT 5", nativeQuery = true)
+  List<Product> findTop5ByOrderByLikeCountDesc(@Param("currentDateTime") LocalDateTime currentDateTime);
+}
