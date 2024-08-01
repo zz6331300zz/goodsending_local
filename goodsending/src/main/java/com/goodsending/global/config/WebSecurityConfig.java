@@ -1,10 +1,12 @@
 package com.goodsending.global.config;
 
+import com.goodsending.global.security.JwtAuthenticationEntryPoint;
 import com.goodsending.global.security.JwtAuthenticationFilter;
 import com.goodsending.global.security.JwtAuthorizationFilter;
 import com.goodsending.global.security.MemberDetailsServiceImpl;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.util.JwtUtil;
+import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,7 @@ public class WebSecurityConfig {
   private final JwtUtil jwtUtil;
   private final MemberDetailsServiceImpl memberDetailsService;
   private final AuthenticationConfiguration authenticationConfiguration;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final MemberRepository memberRepository;
 
   @Bean
@@ -67,7 +70,7 @@ public class WebSecurityConfig {
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
             .permitAll() // resources 접근 허용 설정
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-            .requestMatchers("/api/members/sendMail", "/api/members/signup", "/api/members/login").permitAll()
+            .requestMatchers("/ws", "/api/members/sendMail", "/api/members/signup", "/api/members/login").permitAll()
             //.requestMatchers("/").permitAll()
             .anyRequest().authenticated() // 그 외 모든 요청 인증처리
     );
@@ -90,6 +93,8 @@ public class WebSecurityConfig {
     // 필터 관리
     http.addFilterBefore(jwtAuthorizationFilter(), JwtAuthenticationFilter.class);
     http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+    http.exceptionHandling(exceptions -> exceptions
+        .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 
     return http.build();
   }
