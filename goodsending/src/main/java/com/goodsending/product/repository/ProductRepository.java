@@ -25,6 +25,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
   @Query("select p from Product p where  p.id = :id")
   Optional<Product> findByIdWithOptimisticLock(Long id);
 
-  @Query(value = "SELECT * FROM products WHERE start_date_time > :currentDateTime ORDER BY like_count DESC LIMIT 5", nativeQuery = true)
-  List<Product> findTop5ByOrderByLikeCountDesc(@Param("currentDateTime") LocalDateTime currentDateTime);
+  List<Product> findTop5ByStartDateTimeAfterOrderByLikeCountDesc(
+      @Param("currentDateTime") LocalDateTime currentDateTime);
 }

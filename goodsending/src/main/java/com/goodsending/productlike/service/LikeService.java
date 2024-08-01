@@ -39,7 +39,7 @@ public class LikeService {
     Product product = findProductById(likeRequestDto.getProductId());
     boolean likeButton = likeRequestDto.isPress();
     Like like = null;
-    boolean existingLike = likeRepository.existsByMemberAndProduct(member,product);
+    boolean existingLike = likeRepository.existsByMemberAndProduct(member, product);
 
     if (likeButton) {
       if (!existingLike) {
@@ -76,7 +76,8 @@ public class LikeService {
 
   }
 
-  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size, String sortBy, boolean isAsc) {
+  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size,
+      String sortBy, boolean isAsc) {
     Member member = findMemberById(memberId);
     Sort.Direction direction = isAsc ? Sort.Direction.ASC : Sort.Direction.DESC;
     Sort sort = Sort.by(direction, sortBy);
@@ -86,8 +87,8 @@ public class LikeService {
     return productList.map(ProductCreateResponseDto::from);
   }
 
-  public List<Product> getTop5LikedProduct() {
-    LocalDateTime now = LocalDateTime.now();
-    return productRepository.findTop5ByOrderByLikeCountDesc(now);
+  public List<ProductCreateResponseDto> getTop5LikeProduct(LocalDateTime dateTime) {
+    return productRepository.findTop5ByStartDateTimeAfterOrderByLikeCountDesc(dateTime).stream()
+        .map(ProductCreateResponseDto::from).toList();
   }
 }

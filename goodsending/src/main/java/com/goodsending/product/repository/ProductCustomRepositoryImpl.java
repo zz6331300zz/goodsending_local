@@ -7,6 +7,7 @@ import com.goodsending.product.dto.response.ProductSummaryDto;
 import com.goodsending.product.entity.Product;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -65,4 +66,13 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     return new BooleanBuilder(product.name.containsIgnoreCase(keyword));
   }
 
+  @Override
+  public List<Product> findTop5ByStartDateTimeAfterOrderByLikeCountDesc(
+      LocalDateTime currentDateTime) {
+    return jpaQueryFactory.selectFrom(product)
+        .where(product.startDateTime.gt(currentDateTime))
+        .orderBy(product.likeCount.desc())
+        .limit(5)
+        .fetch();
+  }
 }

@@ -6,8 +6,8 @@ import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.service.LikeService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -51,8 +51,9 @@ public class LikeController {
   @GetMapping("/likes/top5")
   public ResponseEntity<List<ProductCreateResponseDto>> getTop5LikedProduct(
   ) {
+    LocalDateTime dateTime = LocalDateTime.now();
     return ResponseEntity.ok(
-        likeService.getTop5LikedProduct().stream().map(ProductCreateResponseDto::from).toList());
+        likeService.getTop5LikeProduct(dateTime));
   }
 
 
