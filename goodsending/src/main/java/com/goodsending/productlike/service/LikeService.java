@@ -11,8 +11,8 @@ import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.entity.Like;
 import com.goodsending.productlike.repository.LikeRepository;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,7 +39,7 @@ public class LikeService {
     Product product = findProductById(likeRequestDto.getProductId());
     boolean likeButton = likeRequestDto.isPress();
     Like like = null;
-    boolean existingLike = likeRepository.existsByMemberAndProduct(member,product);
+    boolean existingLike = likeRepository.existsByMemberAndProduct(member, product);
 
     if (likeButton) {
       if (!existingLike) {
@@ -76,7 +76,8 @@ public class LikeService {
 
   }
 
-  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size, String sortBy, boolean isAsc) {
+  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size,
+      String sortBy, boolean isAsc) {
     Member member = findMemberById(memberId);
     Sort.Direction direction = isAsc ? Sort.Direction.ASC : Sort.Direction.DESC;
     Sort sort = Sort.by(direction, sortBy);
@@ -84,5 +85,10 @@ public class LikeService {
 
     Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
     return productList.map(ProductCreateResponseDto::from);
+  }
+
+  public List<ProductCreateResponseDto> getTop5LikeProduct(LocalDateTime dateTime) {
+    return productRepository.findTop5ByStartDateTimeAfterOrderByLikeCountDesc(dateTime).stream()
+        .map(ProductCreateResponseDto::from).toList();
   }
 }

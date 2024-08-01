@@ -178,6 +178,16 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
             );
   }
 
+  @Override
+  public List<Product> findTop5ByStartDateTimeAfterOrderByLikeCountDesc(
+      LocalDateTime currentDateTime) {
+    return jpaQueryFactory.selectFrom(product)
+        .where(product.startDateTime.gt(currentDateTime))
+        .orderBy(product.likeCount.desc())
+        .limit(5)
+        .fetch();
+  }
+
   private BooleanExpression closedBuilderExpression(LocalDateTime now) {
     // 입찰 마감 시간이 지난 상품
     return product.maxEndDateTime.before(now)
