@@ -4,6 +4,7 @@ import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Slice;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,5 +17,6 @@ public interface ProductService {
 
   ProductInfoDto getProduct(Long productId);
 
-  Slice<ProductSummaryDto> getProductSlice(String keyword, Long cursorId, int limit);
+  Slice<ProductSummaryDto> getProductSlice(LocalDateTime now, String openProduct, String closedProduct, String keyword,
+      LocalDateTime cursorStartDateTime, Long cursorId, int size);
 }

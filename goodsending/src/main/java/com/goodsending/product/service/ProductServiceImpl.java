@@ -14,6 +14,7 @@ import com.goodsending.product.entity.Product;
 import com.goodsending.product.entity.ProductImage;
 import com.goodsending.product.repository.ProductImageRepository;
 import com.goodsending.product.repository.ProductRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -102,22 +103,23 @@ public class ProductServiceImpl implements ProductService {
   }
 
   /**
-   * 경매 상품 검색
-   * @param keyword
-   * @return 검색된 경매 상품 정보 반환
-   */
-  /**
-   * 경매 상품 검색
-   * @param keyword 검색어
-   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자 값
-   * @param size 조회할 데이터 개수
-   * @return 키워드 검색을 통해 조회한 경매 상품 목록 반환
+   * 경매 상품 목록 조회
+   *
+   * @param now                 현재 시각
+   * @param openProduct         구매 가능한 매물 선택 여부
+   * @param closedProduct       마감된 매물 선택 여부
+   * @param keyword             검색어
+   * @param cursorStartDateTime
+   * @param cursorId            사용자에게 응답해준 마지막 데이터의 식별자값
+   * @param size                조회할 데이터 개수
+   * @return 조회한 경매 상품 목록 반환
    * @author : puclpu
    */
   @Override
-  public Slice<ProductSummaryDto> getProductSlice(String keyword, Long cursorId, int size) {
+  public Slice<ProductSummaryDto> getProductSlice(LocalDateTime now, String openProduct,
+      String closedProduct, String keyword, LocalDateTime cursorStartDateTime, Long cursorId, int size) {
     Pageable pageable = PageRequest.of(0, size);
-    Slice<ProductSummaryDto> productSummaryDtoSlice = productRepository.findByKeywordOrAllOrderByIdDescSlice(keyword, cursorId, pageable);
+    Slice<ProductSummaryDto> productSummaryDtoSlice = productRepository.findByFiltersAndSort(now, openProduct, closedProduct, keyword, cursorStartDateTime, cursorId, pageable);
     return productSummaryDtoSlice;
   }
 

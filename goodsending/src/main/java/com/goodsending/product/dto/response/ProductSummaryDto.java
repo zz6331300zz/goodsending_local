@@ -14,18 +14,20 @@ public class ProductSummaryDto {
   private String name;
   private int price;
   private LocalDateTime startDateTime;
-  private LocalDateTime maxEndDate;
+  private LocalDateTime dynamicEndDateTime;
+  private LocalDateTime maxEndDateTime;
   private String thumbnailUrl;
   // TODO : 입찰 여부 필드
 
   @Builder
-  public ProductSummaryDto(Long productId, String name, int price, LocalDateTime startDateTime,
-      LocalDateTime maxEndDate, String thumbnailUrl) {
+  public ProductSummaryDto(Long productId, String name, int price, LocalDateTime startDateTime, LocalDateTime dynamicEndDateTime,
+      LocalDateTime maxEndDateTime, String thumbnailUrl) {
     this.productId = productId;
     this.name = name;
     this.price = price;
     this.startDateTime = startDateTime;
-    this.maxEndDate = maxEndDate;
+    this.dynamicEndDateTime = dynamicEndDateTime;
+    this.maxEndDateTime = maxEndDateTime;
     this.thumbnailUrl = thumbnailUrl;
   }
 
@@ -38,7 +40,8 @@ public class ProductSummaryDto {
         .name(product.getName())
         .price(product.getPrice())
         .startDateTime(product.getStartDateTime())
-        .maxEndDate(product.getMaxEndDateTime())
+        .dynamicEndDateTime(product.getDynamicEndDateTime())
+        .maxEndDateTime(product.getMaxEndDateTime())
         .thumbnailUrl(thumbnailUrl)
         .build();
   }

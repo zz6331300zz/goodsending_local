@@ -6,7 +6,11 @@ import static com.goodsending.product.entity.QProductImage.productImage;
 import com.goodsending.product.dto.response.ProductSummaryDto;
 import com.goodsending.product.entity.Product;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,47 +26,161 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public Slice<ProductSummaryDto> findByKeywordOrAllOrderByIdDescSlice(String keyword, Long cursorId,
-      Pageable pageable) {
-    List<Product> fetch = jpaQueryFactory
-        .selectFrom(product)
-        .leftJoin(product.productImages, productImage).fetchJoin()
-        .where(searchConditionEquals(keyword, cursorId))
-        .limit(pageable.getPageSize()+1)
-        .orderBy(product.id.desc())
-        .fetch();
+  public Slice<ProductSummaryDto> findByFiltersAndSort(LocalDateTime now, String openProduct, String closedProduct,
+      String keyword, LocalDateTime cursorStartDateTime, Long cursorId, Pageable pageable) {
 
-    List<ProductSummaryDto> productSummaryDtoList = new ArrayList<>();
-    for (Product product : fetch) {
-      ProductSummaryDto summaryDto = ProductSummaryDto.from(product);
-      productSummaryDtoList.add(summaryDto);
+    boolean open = false;
+    if (openProduct != null && openProduct.equals("true")) {
+      open = true;
+    }
+
+    boolean closed = false;
+    if (closedProduct != null && closedProduct.equals("true")) {
+      closed = true;
+    }
+
+    if (open == closed) {
+      open = true;
+      closed = true;
+    }
+
+    // 키워드 검색
+    BooleanBuilder keywordBuilder = new BooleanBuilder();
+    if (keyword != null && !keyword.isEmpty()) {
+      keywordBuilder.and(product.name.containsIgnoreCase(keyword));
+    }
+
+    // 커서 기반 페이징
+    BooleanBuilder cursorBuilder = new BooleanBuilder();
+    if (cursorStartDateTime != null && cursorId != null) {
+      cursorBuilder.and(
+          product.startDateTime.gt(cursorStartDateTime)
+          .or(product.startDateTime.eq(cursorStartDateTime).and(product.id.gt(cursorId))));
+    }
+
+    // 구매 가능한 상품 중 시작 시간이 가장 가까운 상품
+    List<Product> firstFetch = jpaQueryFactory
+        .selectFrom(product)
+        .where(openBuilderExpression(now), keywordBuilder)
+        .limit(1)
+        .orderBy(product.startDateTime.asc())
+        .fetch();
+    Product firstOpenProduct = null;
+    if (firstFetch.size() > 0) {
+      firstOpenProduct = firstFetch.get(0);
+    }
+
+    // 구매 가능한 상품 중 시작 시간이 가장 먼 상품
+    List<Product> lastFetch = jpaQueryFactory
+        .selectFrom(product)
+        .where(openBuilderExpression(now), keywordBuilder)
+        .limit(1)
+        .orderBy(
+            new OrderSpecifier<>(Order.DESC, product.startDateTime),
+            new OrderSpecifier<>(Order.DESC, product.id)
+        )
+        .fetch();
+    Product lastOpenProduct = null;
+    if (lastFetch.size() > 0) {
+      lastOpenProduct = lastFetch.get(0);
+    }
+
+    // 구매 가능한 상품 목록
+    List<Product> openFetch = new ArrayList<>();
+    if (open && openCase(firstOpenProduct, lastOpenProduct, cursorStartDateTime, cursorId)) {
+      openFetch = jpaQueryFactory
+          .selectFrom(product)
+          .leftJoin(product.productImages, productImage).fetchJoin()
+          .where(openBuilderExpression(now), cursorBuilder.and(keywordBuilder))
+          .limit(pageable.getPageSize() + 1)
+          .orderBy(product.startDateTime.asc())
+          .fetch();
     }
 
     boolean hasNext = false;
-    if (productSummaryDtoList.size() > pageable.getPageSize()) {
-      productSummaryDtoList.remove(pageable.getPageSize());
+    if (openFetch.size() > pageable.getPageSize()) {
+      openFetch.remove(pageable.getPageSize());
       hasNext = true;
+    }
+
+    // cursorId가 null 이거나
+    // 구매 가능 목록과 마감 목록을 함께 조회해 리스트에 담아야 할 경우
+    // cursorBuilder 를 초기화하여 사용하지 않음
+    if (cursorId != null && open && (
+        cursorId == lastOpenProduct.getId() || (openFetch.size() < pageable.getPageSize() && openFetch.size() > 0))) {
+      cursorBuilder = new BooleanBuilder();
+    }
+
+    // 마감된 상품 목록
+    List<Product> closedFetch = new ArrayList<>();
+    if (closed && openFetch.size() < pageable.getPageSize()) {
+      closedFetch = jpaQueryFactory
+          .selectFrom(product)
+          .leftJoin(product.productImages, productImage).fetchJoin()
+          .where(closedBuilderExpression(now), cursorBuilder.and(keywordBuilder))
+          .limit(closedProductPageSize(open, openFetch.size(), pageable.getPageSize()))
+          .orderBy(product.startDateTime.asc())
+          .fetch();
+    }
+
+    if (!hasNext && openFetch.size() + closedFetch.size() > pageable.getPageSize()) {
+      closedFetch.remove(pageable.getPageSize() - openFetch.size());
+      hasNext = true;
+    }
+
+    // 구매 가능 상품 목록과 마감된 상품 목록을 합치기
+    List<Product> combinedProducts = new ArrayList<>();
+    combinedProducts.addAll(openFetch);
+    combinedProducts.addAll(closedFetch);
+
+    // ProductSummaryDto 로 변환
+    List<ProductSummaryDto> productSummaryDtoList = new ArrayList<>();
+    for (Product product : combinedProducts) {
+      ProductSummaryDto productSummaryDto = ProductSummaryDto.from(product);
+      productSummaryDtoList.add(productSummaryDto);
     }
 
     return new SliceImpl<>(productSummaryDtoList, pageable, hasNext);
   }
 
-  private BooleanBuilder searchConditionEquals(String keyword, Long cursorId) {
-    return nameContainsKeyword(keyword).and(cursorIdEquals(cursorId));
-  }
-
-  private BooleanBuilder cursorIdEquals(Long cursorId) {
-    if (cursorId == null) {
-      return new BooleanBuilder();
+  private boolean openCase(Product firstOpenProduct, Product lastOpenProduct,
+      LocalDateTime cursorStartDateTime, Long cursorId) {
+    if (cursorId == null && cursorStartDateTime == null) {
+      return true;
+    } else if (firstOpenProduct == null) {
+      return  false;
+    } else if (cursorStartDateTime.isAfter(firstOpenProduct.getStartDateTime()) || cursorStartDateTime.isEqual(firstOpenProduct.getStartDateTime())) {
+      // 판매 마감 상품 cursor 사용 시 조회되지 않도록
+      // 구매 가능한 첫 번째 상품보다 늦거나 같아야 한다
+      if (cursorId == lastOpenProduct.getId()) { // 구매 가능한 상품 중 가장 마지막 상품이 커서라면 조회하지 않는다.
+        return false;
+      }
+      return true;
     }
-    return new BooleanBuilder(product.id.lt(cursorId));
+    return false;
   }
 
-  private BooleanBuilder nameContainsKeyword(String keyword) {
-    if (keyword == null || keyword.equals("")) {
-      return new BooleanBuilder();
+  private long closedProductPageSize(boolean open, int openSize, int pageSize) {
+    // 마감 된 상품의 조회 개수 설정
+    if (open && openSize < pageSize) { // 구매 가능 상품과 함께 조회하여 반환해야 할 경우
+      return pageSize - openSize +1;
+    } else {
+      return pageSize + 1;
     }
-    return new BooleanBuilder(product.name.containsIgnoreCase(keyword));
   }
 
+  private BooleanExpression openBuilderExpression(LocalDateTime now) {
+    // 압찰을 진행하지 않았거나, 입찰 마감 시간이 남은 상품
+    return product.maxEndDateTime.after(now)
+            .and(product.dynamicEndDateTime.isNull()
+                .or(product.dynamicEndDateTime.after(now)
+                )
+            );
+  }
+
+  private BooleanExpression closedBuilderExpression(LocalDateTime now) {
+    // 입찰 마감 시간이 지난 상품
+    return product.maxEndDateTime.before(now)
+        .or(product.dynamicEndDateTime.isNotNull().and(product.dynamicEndDateTime.before(now)));
+  }
 }
