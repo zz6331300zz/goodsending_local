@@ -1,5 +1,7 @@
 package com.goodsending.product.service;
 
+import com.goodsending.deposit.entity.Deposit;
+import com.goodsending.deposit.repository.DepositRepository;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.global.service.S3Uploader;
@@ -43,6 +45,7 @@ public class ProductServiceImpl implements ProductService {
   private final ProductImageRepository productImageRepository;
   private final S3Uploader s3Uploader;
   private final MemberRepository memberRepository;
+  private final DepositRepository depositRepository;
 
   /**
    * 상품 등록
@@ -82,6 +85,18 @@ public class ProductServiceImpl implements ProductService {
       ProductImageCreateResponseDto productImageCreateResponseDto = ProductImageCreateResponseDto.from(productImage);
       savedProductImages.add(productImageCreateResponseDto);
     }
+
+    // 보증금 차감
+    Integer productPrice = savedProduct.getPrice();
+    Integer depositPrice = (int)(productPrice * 0.05); // 보증금은 0.05%를 가져갑니다
+    if (depositPrice < 3000) { // 보증금은 최소 3000원
+      depositPrice = 3000;
+    }
+    member.deductCash(depositPrice);
+
+    // 보증금 내역 저장
+    Deposit deposit = Deposit.of(savedProduct, member, depositPrice);
+    depositRepository.save(deposit);
 
     return ProductCreateResponseDto.of(savedProduct, savedProductImages);
   }
