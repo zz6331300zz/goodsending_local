@@ -2,8 +2,10 @@ package com.goodsending.member.service;
 
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
+import com.goodsending.member.dto.request.MailRequestDto;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
+import com.goodsending.member.repository.SaveMailAndCodeRepository;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
@@ -11,6 +13,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,7 @@ public class MailService {
 
   private final JavaMailSender mailSender;
   private final MemberRepository memberRepository;
+  private final SaveMailAndCodeRepository saveMailAndCodeRepository;
 
   @Value("${spring.mail.username}")
   private String fromEmail;
@@ -46,21 +50,21 @@ public class MailService {
    * @return 인증완료 문구를 반환합니다.
    * @author : 이아람
    */
-  public ResponseEntity<String> sendCode(String email) throws MessagingException, UnsupportedEncodingException {
+  public ResponseEntity<String> sendCode(MailRequestDto mailRequestDto) throws MessagingException, UnsupportedEncodingException {
 
-      // 이메일 중복 확인
-      Optional<Member> checkEmail = memberRepository.findByEmail(email);
-      if (checkEmail.isEmpty()) {
-        String code = this.createCode();
+    // 이메일 중복 확인
+    Optional<Member> checkEmail = memberRepository.findByEmail(mailRequestDto.getEmail());
+    if (checkEmail.isPresent()) {
+      throw CustomException.from(ExceptionCode.EMAIL_ALREADY_EXISTS);
+    }
+    String code = this.createCode();
 
-        // DB 저장
-        Member member = Member.from(email, code);
-        memberRepository.save(member);
-        // 인증코드 메일 전송
-        createMail(email, code);
-      } else {
-        throw CustomException.from(ExceptionCode.EMAIL_ALREADY_EXISTS);
-      }
+    // redis 저장 (5분 동안 유효)
+    saveMailAndCodeRepository.setValue(mailRequestDto.getEmail(), code, Duration.ofMinutes(5));
+
+    // 인증코드 메일 전송
+    createMail(mailRequestDto.getEmail(), code);
+
     return ResponseEntity.ok("인증코드 전송 완료");
   }
 

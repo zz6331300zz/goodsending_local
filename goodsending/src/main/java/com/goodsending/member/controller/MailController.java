@@ -1,5 +1,6 @@
 package com.goodsending.member.controller;
 
+import com.goodsending.member.dto.request.MailRequestDto;
 import com.goodsending.member.service.MailService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.mail.MessagingException;
@@ -8,8 +9,8 @@ import java.io.UnsupportedEncodingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -38,8 +39,8 @@ public class MailController {
    */
   @Operation(summary = "인증코드 발송 기능", description = "이메일 중복검사 후 인증코드 발송")
   @PostMapping("/members/sendMail")
-  public ResponseEntity<String> sendCode(@RequestParam @Valid String email)
+  public ResponseEntity<String> sendCode(@RequestBody @Valid MailRequestDto mailRequestDto)
       throws MessagingException, UnsupportedEncodingException {
-    return mailService.sendCode(email);
+    return mailService.sendCode(mailRequestDto);
   }
 }
