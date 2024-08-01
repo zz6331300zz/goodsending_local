@@ -44,6 +44,7 @@ public enum ExceptionCode {
   USER_NOT_FOUND(NOT_FOUND, "유저 개체를 찾지 못했습니다."),
   PRODUCTIMAGE_NOT_FOUND(NOT_FOUND, "경매 상품 이미지를 찾지 못했습니다."),
   LIKE_NOT_FOUND(NOT_FOUND, "찜 개체를 찾지 못했습니다."),
+  BID_NOT_FOUND(NOT_FOUND, "입찰 개체를 찾지 못했습니다."),
   STOMP_HEADER_ACCESSOR_NOT_FOUND_EXCEPTION(NOT_FOUND, "메시지에서 STOMP 헤더 접근자를 가져오지 못했습니다."),
 
   // CONFLICT:409:충돌

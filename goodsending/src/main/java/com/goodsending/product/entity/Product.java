@@ -4,7 +4,18 @@ import com.goodsending.global.entity.BaseEntity;
 import com.goodsending.member.entity.Member;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.type.AuctionTime;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "products")
@@ -40,6 +52,7 @@ public class Product extends BaseEntity {
   private LocalDateTime maxEndDateTime;
 
   // dynamicEndDateTime은 낙찰자가 정해졌을 때 입력되는 값이다.
+  @Setter
   @Column(name = "dynamic_end_date_time")
   private LocalDateTime dynamicEndDateTime;
 

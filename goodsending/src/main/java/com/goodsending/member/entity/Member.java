@@ -16,11 +16,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@EqualsAndHashCode(of = "memberId")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "members")
 public class Member extends BaseEntity {
@@ -97,7 +99,7 @@ public class Member extends BaseEntity {
   public void cashUpdate(Integer cash) {
     this.cash = cash;
   }
-    
+
   public boolean isCashGreaterOrEqualsThan(Integer amount){
     if (this.cash == null || amount == null) {
       return false;
@@ -112,19 +114,35 @@ public class Member extends BaseEntity {
     return this.point >= amount;
   }
 
+  public void addCash(int cash) {
+    if(this.cash == null){
+      this.cash = cash;
+      return;
+    }
+    this.cash += cash;
+  }
+
+  public void addPoint(int point){
+    if(this.point == null){
+      this.point = point;
+      return;
+    }
+    this.point += point;
+  }
+
   public void deductCash(Integer amount) {
-    if(this.cash == null) return;
     if(!this.isCashGreaterOrEqualsThan(amount)){
       throw CustomException.from(ExceptionCode.USER_CASH_MUST_BE_POSITIVE);
     }
+
     this.cash -= amount;
   }
 
   public void deductPoint(Integer amount) {
-    if(this.point == null) return;
     if (!this.isPointGreaterOrEqualsThan(amount)) {
       throw CustomException.from(ExceptionCode.USER_POINT_MUST_BE_POSITIVE);
     }
+
     this.point -= amount;
   }
 }

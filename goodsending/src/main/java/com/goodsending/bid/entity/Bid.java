@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @Date : 2024. 07. 25.
@@ -48,6 +49,7 @@ public class Bid extends BaseEntity {
   @Column(name = "use_point", nullable = true)
   private Integer usePoint;
 
+  @Setter
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = true)
   private BidStatus status;
