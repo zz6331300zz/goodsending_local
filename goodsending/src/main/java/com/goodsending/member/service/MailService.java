@@ -114,4 +114,23 @@ public class MailService {
         "<p>아래의 인증 번호를 입력하여 본인확인을 해주시기 바랍니다.</p><br>" +
         code;
   }
+
+  /**
+   * 인증코드 확인
+   * <p>
+   * redis에 저장된 인증코드와 일치하는지 확인
+   *
+   * @param email, code
+   * @author : 이아람
+   */
+  public ResponseEntity<String> checkCode(String email, String code) {
+    String storedCode = saveMailAndCodeRepository.getValueByKey(email);
+    if (storedCode == null) {
+      throw CustomException.from(ExceptionCode.CODE_EXPIRED_OR_INVALID);
+    }
+    if (!storedCode.equals(code)) {
+      throw CustomException.from(ExceptionCode.VERIFICATION_CODE_MISMATCH);
+    }
+    return ResponseEntity.ok("인증코드 일치");
+  }
 }

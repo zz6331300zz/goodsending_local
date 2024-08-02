@@ -9,6 +9,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.atn.SemanticContext.OR;
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -46,6 +47,7 @@ public enum ExceptionCode {
   LIKE_NOT_FOUND(NOT_FOUND, "찜 개체를 찾지 못했습니다."),
   BID_NOT_FOUND(NOT_FOUND, "입찰 개체를 찾지 못했습니다."),
   STOMP_HEADER_ACCESSOR_NOT_FOUND_EXCEPTION(NOT_FOUND, "메시지에서 STOMP 헤더 접근자를 가져오지 못했습니다."),
+  CODE_EXPIRED_OR_INVALID(NOT_FOUND, "인증 코드가 만료되었거나 존재하지 않습니다."),
 
   // CONFLICT:409:충돌
   EMAIL_ALREADY_EXISTS(CONFLICT, "중복된 이메일 입니다."),
