@@ -34,18 +34,6 @@ jobs:
           aws-region: ap-northeast-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-#      - name: 빌드된 파일 이름 변경하기
-#        run: mv ./goodsending/build/libs/*SNAPSHOT.jar ./project.jar
-#
-#      - name: SCP로 EC2에 빌드된 파일 전송하기
-#        uses: appleboy/scp-action@v0.1.7
-#        with:
-#          host: ${{ secrets.DEV_EC2_HOST }}
-#          username: ${{ secrets.DEV_EC2_USERNAME }}
-#          key: ${{ secrets.DEV_EC2_PRIVATE_KEY }}
-#          source: project.jar
-#          target: /home/ubuntu/goodsending-server/tobe
       - name: ECR에 로그인하기
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -67,14 +55,7 @@ jobs:
           key: ${{ secrets.DEV_EC2_PRIVATE_KEY }}
           script_stop: true
           script: |
-            docker stop goodsending-server || ture
+            docker stop goodsending-server || true
             docker rm goodsending-server || true
             docker pull  ${{ steps.login-ecr.outputs.registry }}/goodsending-server:latest
             docker run -d --name goodsending-server -p 8080:8080 ${{ steps.login-ecr.outputs.registry }}/goodsending-server:latest
-#            rm -rf /home/ubuntu/goodsending-server/current
-#            mkdir /home/ubuntu/goodsending-server/current
-#            mv /home/ubuntu/goodsending-server/tobe/project.jar /home/ubuntu/goodsending-server/current/project.jar
-#            cd /home/ubuntu/goodsending-server/current
-#            sudo fuser -k -n tcp 8080 || true
-#            nohup java -jar project.jar > ./output.log 2>&1 &
-#            rm -rf /home/ubuntu/goodsending-server/tobe
