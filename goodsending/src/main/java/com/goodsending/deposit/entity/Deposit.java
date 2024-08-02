@@ -1,6 +1,6 @@
 package com.goodsending.deposit.entity;
 
-import com.goodsending.deposit.type.Status;
+import com.goodsending.deposit.type.DepositStatus;
 import com.goodsending.member.entity.Member;
 import com.goodsending.product.entity.Product;
 import jakarta.persistence.Column;
@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "deposit_history")
@@ -44,12 +45,13 @@ public class Deposit {
   @Column(name = "total_price", nullable = true)
   private int totalPrice;
 
+  @Setter
   @Column(name = "status", nullable = false)
   @Enumerated(value = EnumType.STRING)
-  private Status status;
+  private DepositStatus status;
 
   @Builder
-  public Deposit(Product product, Member member, int price, int totalPrice, Status status) {
+  public Deposit(Product product, Member member, int price, int totalPrice, DepositStatus status) {
     this.product = product;
     this.member = member;
     this.price = price;
@@ -63,7 +65,7 @@ public class Deposit {
         .product(savedProduct)
         .price(depositPrice)
         .totalPrice(savedProduct.getPrice())
-        .status(Status.UNRETURNED)
+        .status(DepositStatus.UNRETURNED)
         .build();
   }
 }

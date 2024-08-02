@@ -5,6 +5,9 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
+import com.goodsending.product.entity.ProductImage;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -106,5 +109,24 @@ public class S3Uploader {
     } else {
       log.info("파일이 삭제되지 못했습니다.");
     }
+  }
+
+  public void deleteProductImageFileList(List<ProductImage> productImageList) {
+    for (ProductImage productImage : productImageList) {
+      String fileName = productImage.getUrl();
+      deleteFile(fileName);
+    }
+  }
+
+  private void deleteFile(String fileName) {
+    // decode 한 원래 파일 이름
+    String decodedFileName = "";
+    try {
+      decodedFileName = URLDecoder.decode(fileName, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw CustomException.from(ExceptionCode.FILENAME_DECODE_FAILED);
+    }
+    log.info("S3에서 파일 삭제 : {}", decodedFileName);
+    amazonS3.deleteObject(bucket, decodedFileName);
   }
 }

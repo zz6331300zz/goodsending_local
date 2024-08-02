@@ -2,9 +2,11 @@ package com.goodsending.product.controller;
 
 import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
+import com.goodsending.product.dto.request.ProductUpdateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
+import com.goodsending.product.dto.response.ProductUpdateResponseDto;
 import com.goodsending.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -95,5 +97,36 @@ public class ProductController {
     LocalDateTime now = LocalDateTime.now();
     Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(now, openProduct, closedProduct, keyword, cursorStartDateTime, cursorId, size);
     return ResponseEntity.status(HttpStatus.OK).body(productSummaryDtoSlice);
+  }
+
+  /**
+   * 경매 상품 수정
+   * @param productId 상품 아이디
+   * @param requestDto 상품 수정 요청 정보
+   * @param productImages 상품 이미지
+   * @param memberId 등록자
+   * @return 수정된 상품 정보
+   */
+  @PutMapping("/{productId}")
+  public ResponseEntity<ProductUpdateResponseDto> updateProduct (@PathVariable Long productId,
+                                    @RequestPart("requestDto") @Valid ProductUpdateRequestDto requestDto,
+                                    @RequestPart("productImages") List<MultipartFile> productImages,
+                                    @MemberId(required = true) Long memberId) {
+    LocalDateTime now = LocalDateTime.now();
+    ProductUpdateResponseDto responseDto = productService.updateProduct(productId, requestDto, productImages, memberId, now);
+    return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+  }
+
+  /**
+   * 경매 상품 삭제
+   * @param productId 상품 아이디
+   * @param memberId 등록자
+   * @return 경매 상품 삭제 성공 여부
+   */
+  @DeleteMapping("/{productId}")
+  public ResponseEntity<Void> deleteProduct(@PathVariable Long productId, @MemberId(required = true) Long memberId) {
+    LocalDateTime now = LocalDateTime.now();
+    productService.deleteProduct(productId, memberId, now);
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 }

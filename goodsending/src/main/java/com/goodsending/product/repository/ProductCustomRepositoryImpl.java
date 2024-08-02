@@ -4,11 +4,13 @@ import static com.goodsending.product.entity.QProduct.product;
 import static com.goodsending.product.entity.QProductImage.productImage;
 
 import com.goodsending.product.dto.response.ProductSummaryDto;
+import com.goodsending.product.dto.response.QProductSummaryDto;
 import com.goodsending.product.entity.Product;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -86,12 +88,21 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     }
 
     // 구매 가능한 상품 목록
-    List<Product> openFetch = new ArrayList<>();
+    List<ProductSummaryDto> openFetch = new ArrayList<>();
     if (open && openCase(firstOpenProduct, lastOpenProduct, cursorStartDateTime, cursorId)) {
       openFetch = jpaQueryFactory
-          .selectFrom(product)
-          .leftJoin(product.productImages, productImage).fetchJoin()
-          .where(openBuilderExpression(now), cursorBuilder.and(keywordBuilder))
+          .select( new QProductSummaryDto(
+              product.id,
+              product.name,
+              product.price,
+              product.startDateTime,
+              product.dynamicEndDateTime,
+              product.maxEndDateTime,
+              productImage.url))
+          .from(product)
+          .leftJoin(productImage).on(productImage.product.eq(product))
+          .where(openBuilderExpression(now), cursorBuilder.and(keywordBuilder), productImage.id.eq(
+              JPAExpressions.select(productImage.id.min()).from(productImage).where(productImage.product.eq(product))))
           .limit(pageable.getPageSize() + 1)
           .orderBy(product.startDateTime.asc())
           .fetch();
@@ -112,12 +123,21 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     }
 
     // 마감된 상품 목록
-    List<Product> closedFetch = new ArrayList<>();
+    List<ProductSummaryDto> closedFetch = new ArrayList<>();
     if (closed && openFetch.size() < pageable.getPageSize()) {
       closedFetch = jpaQueryFactory
-          .selectFrom(product)
-          .leftJoin(product.productImages, productImage).fetchJoin()
-          .where(closedBuilderExpression(now), cursorBuilder.and(keywordBuilder))
+          .select( new QProductSummaryDto(
+              product.id,
+              product.name,
+              product.price,
+              product.startDateTime,
+              product.dynamicEndDateTime,
+              product.maxEndDateTime,
+              productImage.url))
+          .from(product)
+          .leftJoin(productImage).on(productImage.product.eq(product))
+          .where(closedBuilderExpression(now), cursorBuilder.and(keywordBuilder), productImage.id.eq(
+              JPAExpressions.select(productImage.id.min()).from(productImage).where(productImage.product.eq(product))))
           .limit(closedProductPageSize(open, openFetch.size(), pageable.getPageSize()))
           .orderBy(product.startDateTime.asc())
           .fetch();
@@ -129,18 +149,11 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     }
 
     // 구매 가능 상품 목록과 마감된 상품 목록을 합치기
-    List<Product> combinedProducts = new ArrayList<>();
+    List<ProductSummaryDto> combinedProducts = new ArrayList<>();
     combinedProducts.addAll(openFetch);
     combinedProducts.addAll(closedFetch);
 
-    // ProductSummaryDto 로 변환
-    List<ProductSummaryDto> productSummaryDtoList = new ArrayList<>();
-    for (Product product : combinedProducts) {
-      ProductSummaryDto productSummaryDto = ProductSummaryDto.from(product);
-      productSummaryDtoList.add(productSummaryDto);
-    }
-
-    return new SliceImpl<>(productSummaryDtoList, pageable, hasNext);
+    return new SliceImpl<>(combinedProducts, pageable, hasNext);
   }
 
   private boolean openCase(Product firstOpenProduct, Product lastOpenProduct,
