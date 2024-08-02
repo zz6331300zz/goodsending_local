@@ -150,7 +150,7 @@ public class ProductServiceImpl implements ProductService {
    * @param productImages 상품 이미지
    * @param memberId 등록자
    * @param now 현재 시각
-   * @return
+   * @return 수정된 상품 정보 반환
    */
   @Override
   @Transactional
@@ -231,8 +231,7 @@ public class ProductServiceImpl implements ProductService {
 
     // 입찰자 존재 여부 판별
     if (product.getBiddingCount() > 0) {
-      // TODO : 입찰가 환불 처리
-
+      throw CustomException.from(ExceptionCode.BIDDER_ALREADY_EXIST); // 입찰자가 존재하면 삭제 불가
     }
 
     // 판매자의 보증금 환불
