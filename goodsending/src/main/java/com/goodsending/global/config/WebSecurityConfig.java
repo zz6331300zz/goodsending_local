@@ -6,7 +6,10 @@ import com.goodsending.global.security.JwtAuthorizationFilter;
 import com.goodsending.global.security.MemberDetailsServiceImpl;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.util.JwtUtil;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +22,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity // Spring Security 지원을 가능하게 함
@@ -30,6 +36,9 @@ public class WebSecurityConfig {
   private final AuthenticationConfiguration authenticationConfiguration;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final MemberRepository memberRepository;
+
+  @Value("${front.list}")
+  private List<String> frontUrls;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -58,6 +67,9 @@ public class WebSecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     // CSRF 설정
     http.csrf((csrf) -> csrf.disable());
+
+    // CORS 설정
+    http.cors(configuration -> configuration.configurationSource(corsConfigurationSource()));
 
     // 기본 설정인 Session 방식은 사용하지 않고 JWT 방식을 사용하기 위한 설정
     http.sessionManagement((sessionManagement) ->
@@ -97,5 +109,20 @@ public class WebSecurityConfig {
         .authenticationEntryPoint(jwtAuthenticationEntryPoint));
 
     return http.build();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowCredentials(true);
+    configuration.setAllowedOrigins(frontUrls);
+    configuration.setAllowedHeaders(Collections.singletonList("*"));
+    configuration.setAllowedMethods(Collections.singletonList("*"));
+    configuration.setMaxAge(7200L); // 2시간
+    configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 }
