@@ -18,5 +18,5 @@ public interface OrderService {
    * @return 저장된 주문 정보
    * @author : jieun(je-pa)
    */
-  ReceiverInfoResponse updateReceiverInfo(Long memberId, ReceiverInfoRequest request);
+  ReceiverInfoResponse updateReceiverInfo(Long memberId, Long orderId, ReceiverInfoRequest request);
 }
