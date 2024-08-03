@@ -28,17 +28,24 @@ jobs:
         run: ./gradlew clean build
         working-directory: ./goodsending
 
-      - name: 빌드된 파일 이름 변경하기
-        run: mv ./goodsending/build/libs/*SNAPSHOT.jar ./project.jar
-
-      - name: SCP로 EC2에 빌드된 파일 전송하기
-        uses: appleboy/scp-action@v0.1.7
+      - name: AWS Resource에 접근할 수 있게 AWS credentials 설정
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USERNAME }}
-          key: ${{ secrets.DEV_EC2_PRIVATE_KEY }}
-          source: project.jar
-          target: /home/ubuntu/goodsending-server/tobe
+          aws-region: ap-northeast-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: ECR에 로그인하기
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker 이미지 생성
+        run: docker build -t goodsending-server .
+
+      - name: Docker 이미지에 Tag 붙이기
+        run: docker tag goodsending-server ${{ steps.login-ecr.outputs.registry }}/goodsending-server:latest
+
+      - name: ECR에 Docker 이미지 Push하기
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/goodsending-server:latest
 
       - name: SSH로 EC2에 접속하기
         uses: appleboy/ssh-action@v1.0.3
@@ -48,10 +55,7 @@ jobs:
           key: ${{ secrets.DEV_EC2_PRIVATE_KEY }}
           script_stop: true
           script: |
-            rm -rf /home/ubuntu/goodsending-server/current
-            mkdir /home/ubuntu/goodsending-server/current
-            mv /home/ubuntu/goodsending-server/tobe/project.jar /home/ubuntu/goodsending-server/current/project.jar
-            cd /home/ubuntu/goodsending-server/current
-            sudo fuser -k -n tcp 8080 || true 
-            nohup java -jar project.jar > ./output.log 2>&1 & 
-            rm -rf /home/ubuntu/goodsending-server/tobe
+            docker stop goodsending-server || true
+            docker rm goodsending-server || true
+            docker pull  ${{ steps.login-ecr.outputs.registry }}/goodsending-server:latest
+            docker run -d --name goodsending-server -p 8080:8080 ${{ steps.login-ecr.outputs.registry }}/goodsending-server:latest

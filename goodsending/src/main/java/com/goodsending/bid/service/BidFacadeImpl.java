@@ -27,7 +27,6 @@ public class BidFacadeImpl implements BidFacade {
   private final BidService bidService;
   private final ProductBidPriceMaxRepository productBidPriceMaxRepository;
   private final SimpMessagingTemplate messagingTemplate;
-  private static final int BID_EXTENSION_MINUTES = 5;
 
   @Override
   public BidWithDurationResponse create(Long memberId, BidRequest request, LocalDateTime now)
@@ -37,8 +36,7 @@ public class BidFacadeImpl implements BidFacade {
         BidResponse bidResponse = bidService.create(memberId, request, now);
 
         // 현재 최고 금액을 업데이트 해준다.
-        productBidPriceMaxRepository.setValue(
-            request.productId(), request.bidPrice(), Duration.ofMinutes(BID_EXTENSION_MINUTES));
+        productBidPriceMaxRepository.setValueWithDuration(request.productId(), request.bidPrice());
 
         // 경매 마감까지 남은 시간: 업데이트 메시지를 보낸다.
         Duration remainingExpiration = productBidPriceMaxRepository.getRemainingExpiration(

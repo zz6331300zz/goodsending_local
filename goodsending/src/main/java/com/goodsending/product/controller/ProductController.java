@@ -2,12 +2,15 @@ package com.goodsending.product.controller;
 
 import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
+import com.goodsending.product.dto.request.ProductUpdateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
+import com.goodsending.product.dto.response.ProductUpdateResponseDto;
 import com.goodsending.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Slice;
@@ -71,22 +74,59 @@ public class ProductController {
   }
 
   /**
-   * 경매 상품 검색
+   * 경매 상품 목록 조회
+   * @param openProduct 구매 가능한 매물 선택 여부
+   * @param closedProduct 마감된 매물 선택 여부
    * @param keyword 검색어
-   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자 값
+   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
    * @param size 조회할 데이터 개수
-   * @return 키워드 검색을 통해 조회한 경매 상품 목록 반환
+   * @return 조회한 경매 상품 목록 반환
    * @author : puclpu
    */
   @Operation(summary = "경매 상품 검색 기능",
-      description = "keyword를 입력하면 상품명에 해당 keyword가 포함된 상품 목록을, keyword를 입력하지 않았다면 상품 전체 목록을 조회할 수 있으며,"
-          + " 입력한 size 개수만큼 조회할 수 있다.")
+      description = "필터링 조건(구매 가능한 매물, 마감된 매물, 검색어)에 맞춰 검색을 진행하고 조회된 상품 목록을 반환한다."
+          + "구매 가능한 매물과 마감된 매물 순으로 정렬하되 시작 시간이 빠른 순으로 정렬한다.")
   @GetMapping
-  public ResponseEntity<Slice<ProductSummaryDto>> getProductList(@RequestParam(required = false) String keyword,
-                                              @RequestParam(required = false) Long cursorId,
-                                              @RequestParam(required = true, defaultValue = "15") int size) {
-    Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(keyword, cursorId,
-        size);
+  public ResponseEntity<Slice<ProductSummaryDto>> getProductSlice(
+                                    @RequestParam(required = false) String openProduct,
+                                    @RequestParam(required = false) String closedProduct,
+                                    @RequestParam(required = false) String keyword,
+                                    @RequestParam(required = false) LocalDateTime cursorStartDateTime,
+                                    @RequestParam(required = false) Long cursorId,
+                                    @RequestParam(required = true, defaultValue = "15") int size) {
+    LocalDateTime now = LocalDateTime.now();
+    Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(now, openProduct, closedProduct, keyword, cursorStartDateTime, cursorId, size);
     return ResponseEntity.status(HttpStatus.OK).body(productSummaryDtoSlice);
+  }
+
+  /**
+   * 경매 상품 수정
+   * @param productId 상품 아이디
+   * @param requestDto 상품 수정 요청 정보
+   * @param productImages 상품 이미지
+   * @param memberId 등록자
+   * @return 수정된 상품 정보
+   */
+  @PutMapping("/{productId}")
+  public ResponseEntity<ProductUpdateResponseDto> updateProduct (@PathVariable Long productId,
+                                    @RequestPart("requestDto") @Valid ProductUpdateRequestDto requestDto,
+                                    @RequestPart("productImages") List<MultipartFile> productImages,
+                                    @MemberId(required = true) Long memberId) {
+    LocalDateTime now = LocalDateTime.now();
+    ProductUpdateResponseDto responseDto = productService.updateProduct(productId, requestDto, productImages, memberId, now);
+    return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+  }
+
+  /**
+   * 경매 상품 삭제
+   * @param productId 상품 아이디
+   * @param memberId 등록자
+   * @return 경매 상품 삭제 성공 여부
+   */
+  @DeleteMapping("/{productId}")
+  public ResponseEntity<Void> deleteProduct(@PathVariable Long productId, @MemberId(required = true) Long memberId) {
+    LocalDateTime now = LocalDateTime.now();
+    productService.deleteProduct(productId, memberId, now);
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 }
