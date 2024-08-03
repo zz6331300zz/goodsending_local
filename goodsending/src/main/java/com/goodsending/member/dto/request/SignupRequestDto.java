@@ -20,7 +20,6 @@ public class SignupRequestDto {
   private String confirmPassword; // DB x, 단순 체크 용
 
   private String code;
-
   // TODO : 관리자 할 경우 adminToken
   //private String adminToken = "";
 }

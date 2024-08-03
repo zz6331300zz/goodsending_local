@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,14 +38,14 @@ public class MemberController {
   /**
    * 회원가입
    * <p>
-   * 이메일 인증 이후 코드, 비밀번호 입력하면 회원가입 된다.
+   * 이메일 인증, 인증코드, 비밀번호 입력하면 회원가입 된다.
    *
    * @param SignupRequestDto
    * @return MemberService 반환합니다.
    * @author : 이아람
    */
-  @Operation(summary = "회원 가입 기능", description = "이메일, 코드, 비밀번호 입력하면 회원 가입 된다.")
-  @PutMapping("/members/signup")
+  @Operation(summary = "회원 가입 기능", description = "이메일, 인증코드, 비밀번호 입력하면 회원 가입 된다.")
+  @PostMapping("/members/signup")
   public ResponseEntity<String> signup(@RequestBody @Valid SignupRequestDto signupRequestDto) {
 
     return memberService.signup(signupRequestDto);

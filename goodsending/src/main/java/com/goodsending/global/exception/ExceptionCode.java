@@ -10,7 +10,6 @@ import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.atn.SemanticContext.OR;
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -32,10 +31,10 @@ public enum ExceptionCode {
   PASSWORD_MISMATCH(BAD_REQUEST, "두 비밀번호가 일치하지 않습니다."),
   VERIFICATION_CODE_MISMATCH(BAD_REQUEST, "인증코드가 일치하지 않습니다."),
   MEMBER_ID_MISMATCH(BAD_REQUEST, "회원 아이디가 일치하지 않습니다."),
+  CODE_EXPIRED_OR_INVALID(NOT_FOUND, "인증 코드가 만료되었거나 존재하지 않습니다."),
   BIDDER_ALREADY_EXIST(BAD_REQUEST, "입찰자가 이미 존재합니다."),
 
   // Unauthorized:401:인증이슈
-  EMAIL_NOT_VERIFIED(UNAUTHORIZED, "이메일 인증이 되지 않았습니다."),
   MEMBER_PASSWORD_INCORRECT(UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
   INVALID_TOKEN(UNAUTHORIZED, "토큰이 유효하지 않습니다."),
 
@@ -49,7 +48,7 @@ public enum ExceptionCode {
   LIKE_NOT_FOUND(NOT_FOUND, "찜 개체를 찾지 못했습니다."),
   BID_NOT_FOUND(NOT_FOUND, "입찰 개체를 찾지 못했습니다."),
   STOMP_HEADER_ACCESSOR_NOT_FOUND_EXCEPTION(NOT_FOUND, "메시지에서 STOMP 헤더 접근자를 가져오지 못했습니다."),
-  CODE_EXPIRED_OR_INVALID(NOT_FOUND, "인증 코드가 만료되었거나 존재하지 않습니다."),
+
 
   // CONFLICT:409:충돌
   EMAIL_ALREADY_EXISTS(CONFLICT, "중복된 이메일 입니다."),

@@ -8,6 +8,8 @@ import com.goodsending.member.dto.request.SignupRequestDto;
 import com.goodsending.member.dto.response.MemberInfoDto;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
+import com.goodsending.member.repository.SaveMailAndCodeRepository;
+import com.goodsending.member.type.MemberRole;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,7 @@ public class MemberService {
 
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
+  private final SaveMailAndCodeRepository saveMailAndCodeRepository;
 
   // TODO : 관리자 할 경우 ADMIN_TOKEN 생성
   //private final String ADMIN_TOKEN = "1234";
@@ -37,21 +40,28 @@ public class MemberService {
   /**
    * 회원가입
    * <p>
-   * 입력한 이메일, 코드 값 DB에서 확인 후 일치하면 비밀번호 암호화, verify = true로 DB update
+   * 입력한 코드가 redis에 저장된 코드와 일치하면 비밀번호 암호화해서 DB에 저장합니다.
    *
    * @param SignupRequestDto
    * @return 가입완료 문구 반환합니다.
    * @author : 이아람
    */
   public ResponseEntity<String> signup(SignupRequestDto signupRequestDto) {
-
+    // 이메일 중복 확인
     Optional<Member> checkEmail = memberRepository.findByEmail(signupRequestDto.getEmail());
-    // 이메일, 코드 확인
     if (checkEmail.isPresent()) {
-      if (!checkEmail.get().getCode().equals(signupRequestDto.getCode())) {
-        throw CustomException.from(ExceptionCode.VERIFICATION_CODE_MISMATCH);
-      }
+      throw CustomException.from(ExceptionCode.EMAIL_ALREADY_EXISTS);
     }
+    
+    // redis에 저장되어있는 code와 일치하는지 확인
+    String storedCode = saveMailAndCodeRepository.getValueByKey(signupRequestDto.getEmail());
+    if (storedCode == null) {
+      throw CustomException.from(ExceptionCode.CODE_EXPIRED_OR_INVALID);
+    }
+    if (!storedCode.equals(signupRequestDto.getCode())) {
+      throw CustomException.from(ExceptionCode.VERIFICATION_CODE_MISMATCH);
+    }
+
     // 비밀번호 일치 확인
     if (!signupRequestDto.getPassword().equals(signupRequestDto.getConfirmPassword())) {
       throw CustomException.from(ExceptionCode.PASSWORD_MISMATCH);
@@ -60,19 +70,20 @@ public class MemberService {
     String encodedPassword = passwordEncoder.encode(signupRequestDto.getPassword());
 
     // TODO : 관리자 할 경우 사용자 ROLE 확인
-    //MemberRole role = MemberRole.USER;
+    MemberRole role = MemberRole.USER;
 //        if (signupRequestDto.isAdmin()) {
 //            if (!ADMIN_TOKEN.equals(signupRequestDto.getAdminToken())) {
 //                throw new IllegalArgumentException("관리자 암호가 틀려 등록이 불가능합니다.");
 //            }
 //            role = MemberRole.ADMIN;
 //        }
-    boolean verify = true;
-    Member member = checkEmail.get();
-    member.update(encodedPassword, verify);
+    Member member = Member.from(signupRequestDto, encodedPassword, role);
     memberRepository.save(member);
+    // redis에서 삭제
+    saveMailAndCodeRepository.deleteByKey(signupRequestDto.getEmail());
     return ResponseEntity.ok("가입 완료");
   }
+
 
   /**
    * 회원 정보 조회
