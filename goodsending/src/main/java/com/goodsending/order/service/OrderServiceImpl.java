@@ -31,8 +31,8 @@ public class OrderServiceImpl implements OrderService{
    */
   @Override
   @Transactional
-  public ReceiverInfoResponse updateReceiverInfo(Long memberId, ReceiverInfoRequest request) {
-    Order order = findOrderWithBidById(request.orderId());
+  public ReceiverInfoResponse updateReceiverInfo(Long memberId, Long orderId, ReceiverInfoRequest request) {
+    Order order = findOrderWithBidById(orderId);
 
     if(!order.isReceiverId(memberId)) {
       throw CustomException.from(ExceptionCode.RECEIVER_ID_MISMATCH);

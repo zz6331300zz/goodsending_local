@@ -1,7 +1,6 @@
 package com.goodsending.order.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * @author : jieun(je-pa)
@@ -10,9 +9,6 @@ import jakarta.validation.constraints.NotNull;
  * @Project : goodsending-be :: goodsending
  */
 public record ReceiverInfoRequest(
-
-    @NotNull
-    Long orderId,
 
     @NotBlank
     String receiverName,
