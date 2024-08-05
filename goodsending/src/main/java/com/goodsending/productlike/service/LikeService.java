@@ -10,14 +10,22 @@ import com.goodsending.product.repository.ProductRepository;
 import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.entity.Like;
+import com.goodsending.productlike.repository.LikeCountRankingRankingRepository;
 import com.goodsending.productlike.repository.LikeRepository;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -31,6 +39,7 @@ public class LikeService {
   private final LikeRepository likeRepository;
   private final MemberRepository memberRepository;
   private final ProductRepository productRepository;
+  private final LikeCountRankingRankingRepository likeCountRankingRepository;
 
   @Transactional
   public ResponseEntity<LikeResponseDto> toggleLike(Long memberId, LikeRequestDto likeRequestDto) {
@@ -91,4 +100,80 @@ public class LikeService {
     return productRepository.findTop5ByStartDateTimeAfterOrderByLikeCountDesc(dateTime).stream()
         .map(ProductCreateResponseDto::from).toList();
   }
+
+  @Transactional
+  public ResponseEntity<LikeResponseDto> toggleLikeRedis(Long memberId, LikeRequestDto requestDto) {
+    Member member = findMemberById(memberId);
+    Product product = findProductById(requestDto.getProductId());
+    boolean likeButton = requestDto.isPress();
+    Like like = null;
+    boolean existingLike = likeRepository.existsByMemberAndProduct(member, product);
+
+    if (likeButton) {
+      if (!existingLike) {
+        like = new Like(product, member);
+        likeRepository.save(like);
+        countLike(product);
+        likeCountRankingRepository.setZSetValue("ranking", product.getName(),
+            product.getLikeCount());
+        likeCountRankingRepository.setExpire("ranking", 50);
+
+        Long startDateTime = product.getStartDateTime().toEpochSecond(ZoneOffset.UTC);
+        likeCountRankingRepository.setHashValue("product_start_date_time",
+            product.getName(), startDateTime.toString());
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+      }
+    } else {
+      like = likeRepository.findLikeByMemberAndProduct(member,
+          product).orElseThrow(() -> CustomException.from(ExceptionCode.MEMBER_NOT_FOUND));
+      likeRepository.delete(like);
+      countLike(product);
+
+      likeCountRankingRepository.deleteZSetValue("ranking", product.getName(),
+          product.getLikeCount().toString());
+      Long startDateTime = product.getStartDateTime().toEpochSecond(ZoneOffset.UTC);
+      likeCountRankingRepository.deleteHashValue("product_start_date_time", product.getName(),
+          startDateTime.toString());
+
+      return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+  }
+
+  public List<ProductCreateResponseDto> read(LocalDateTime dateTime) {
+    Set<TypedTuple<String>> allProducts = likeCountRankingRepository.getZSetTupleByKey(
+        "ranking", 0, -1);
+    LocalDateTime now = dateTime;
+    double currentTimestamp = now.toEpochSecond(ZoneOffset.UTC);
+
+    return allProducts.stream()
+        .filter(tuple -> {
+          String productId = tuple.getValue();
+          Double score = tuple.getScore();
+          Long startDateTimeTimestamp = Long.valueOf(likeCountRankingRepository.getHashValueByKey(
+              "product_start_date_time", productId));
+          return startDateTimeTimestamp != null && startDateTimeTimestamp > currentTimestamp;
+        })
+        .sorted((t1, t2) -> Double.compare(t2.getScore(),
+            t1.getScore()))
+        .limit(5)
+        .map(tuple -> {
+          String productId = tuple.getValue();
+          Double score = tuple.getScore();
+          Long startDateTimeTimestamp =
+              Long.valueOf(
+                  likeCountRankingRepository.getHashValueByKey("product_start_date_time", productId));
+          LocalDateTime startDateTime = toLocalDateTime(startDateTimeTimestamp, ZoneOffset.UTC);
+          return ProductCreateResponseDto.from(productId, score.longValue(),
+              startDateTime);
+        })
+        .toList();
+  }
+
+  public static LocalDateTime toLocalDateTime(long epochSecond, ZoneId zoneId) {
+    Instant instant = Instant.ofEpochSecond(epochSecond);
+    return LocalDateTime.ofInstant(instant, zoneId);
+  }
+
 }

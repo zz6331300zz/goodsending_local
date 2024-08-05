@@ -49,12 +49,26 @@ public class LikeController {
 
   @Operation(summary = "찜하기 수 top5 상품 조회", description = "찜하기 수 top5 상품조회 한다.")
   @GetMapping("/likes/top5")
-  public ResponseEntity<List<ProductCreateResponseDto>> getTop5LikedProduct(
+  public ResponseEntity<List<ProductCreateResponseDto>> getTop5LikeProduct(
   ) {
     LocalDateTime dateTime = LocalDateTime.now();
     return ResponseEntity.ok(
         likeService.getTop5LikeProduct(dateTime));
   }
 
+  @Operation(summary = "찜하기 수 top5 상품 등록 redis", description = "찜하기 수 top5 상품등록 한다. redis")
+  @PostMapping("/likes/redis")
+  public ResponseEntity<LikeResponseDto> create(@MemberId Long memberId,
+      @RequestBody @Valid LikeRequestDto requestDto) {
+    LocalDateTime dateTime = LocalDateTime.now();
+    return likeService.toggleLikeRedis(memberId, requestDto);
+  }
 
+
+  @Operation(summary = "찜하기 수 top5 상품 조회 redis", description = "찜하기 수 top5 상품조회 한다. redis")
+  @GetMapping("/likes/redis")
+  public ResponseEntity<List<ProductCreateResponseDto>> read() {
+    LocalDateTime dateTime = LocalDateTime.now();
+    return ResponseEntity.ok(likeService.read(dateTime));
+  }
 }
