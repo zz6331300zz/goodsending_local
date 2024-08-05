@@ -116,7 +116,7 @@ public class WebSecurityConfig {
     configuration.setAllowedOrigins(frontUrls);
     configuration.setAllowedHeaders(Collections.singletonList("*"));
     configuration.setAllowedMethods(Collections.singletonList("*"));
-    configuration.setMaxAge(7200L); // 2시간
+    configuration.setMaxAge(600L); // 10분
     configuration.setExposedHeaders(Collections.singletonList("Authorization"));
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
