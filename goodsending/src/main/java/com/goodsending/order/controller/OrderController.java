@@ -2,6 +2,7 @@ package com.goodsending.order.controller;
 
 import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.order.dto.request.ReceiverInfoRequest;
+import com.goodsending.order.dto.response.OrderResponse;
 import com.goodsending.order.dto.response.ReceiverInfoResponse;
 import com.goodsending.order.dto.response.UpdateShippingResponse;
 import com.goodsending.order.service.OrderService;
@@ -58,4 +59,19 @@ public class OrderController {
       @PathVariable Long orderId){
     return ResponseEntity.ok(orderService.updateShipping(memberId, orderId, LocalDateTime.now()));
   }
+
+  /**
+   * 수신자가 배송을 받은 후 거래확정을 합니다.
+   * @param memberId 로그인 유저 아이디 => 수신자(=낙찰자)id
+   * @param orderId 주문 id
+   * @return 업데이트된 order 정보를 반환합니다.
+   * @author : jieun(je-pa)
+   */
+  @Operation(summary = "수신자가 거래를 확정합니다.",
+      description = "수신자가 배송을 받은 후 거래확정을 합니다.")
+  @PutMapping("/{orderId}/confirm")
+  public ResponseEntity<OrderResponse> confirmOrder(@MemberId Long memberId, @PathVariable Long orderId) {
+    return ResponseEntity.ok(orderService.confirmOrder(memberId, orderId, LocalDateTime.now()));
+  }
+
 }

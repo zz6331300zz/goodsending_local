@@ -13,4 +13,6 @@ public interface OrderQueryDslRepository {
   Optional<Order> findOrderWithBidById(Long orderId);
 
   Optional<Order> findOrderWithBidAndProductById(Long orderId);
+
+  Optional<Order> findOrderWithBidAndProductAndSellerById(Long orderId);
 }

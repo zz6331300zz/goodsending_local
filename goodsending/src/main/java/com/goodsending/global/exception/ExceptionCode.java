@@ -35,6 +35,7 @@ public enum ExceptionCode {
   CODE_EXPIRED_OR_INVALID(NOT_FOUND, "인증 코드가 만료되었거나 존재하지 않습니다."),
   BIDDER_ALREADY_EXIST(BAD_REQUEST, "입찰자가 이미 존재합니다."),
   ORDER_IS_NOT_PENDING(BAD_REQUEST, "주문의 배송지 정보가 입력되어야 배송 출발이 가능합니다."),
+  ORDER_IS_NOT_SHIPPING(BAD_REQUEST, "배송이 출발한 후에 주문 확정이 가능합니다."),
 
   // Unauthorized:401:인증이슈
   MEMBER_PASSWORD_INCORRECT(UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),

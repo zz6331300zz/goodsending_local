@@ -88,10 +88,21 @@ public class Order extends BaseEntity {
     return this;
   }
 
+  public Order processConfirm(LocalDateTime confirmedDateTime){
+    this.confirmedDateTime = confirmedDateTime;
+    this.status = OrderStatus.COMPLETED;
+    return this;
+  }
+
   public boolean isPending(){
     return this.receiverCellNumber != null &&
         this.receiverAddress != null &&
         this.receiverName != null &&
         this.status == OrderStatus.PENDING;
+  }
+
+  public boolean isShipping(){
+    return this.deliveryDateTime != null
+        && this.status == OrderStatus.SHIPPING;
   }
 }

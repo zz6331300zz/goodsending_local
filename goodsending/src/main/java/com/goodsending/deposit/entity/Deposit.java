@@ -68,4 +68,8 @@ public class Deposit {
         .status(DepositStatus.UNRETURNED)
         .build();
   }
+
+  public void processReturn(){
+    this.status = DepositStatus.RETURNED;
+  }
 }
