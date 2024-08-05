@@ -2,6 +2,8 @@ package com.goodsending.order.service;
 
 import com.goodsending.order.dto.request.ReceiverInfoRequest;
 import com.goodsending.order.dto.response.ReceiverInfoResponse;
+import com.goodsending.order.dto.response.UpdateShippingResponse;
+import java.time.LocalDateTime;
 
 /**
  * @author : jieun(je-pa)
@@ -19,4 +21,6 @@ public interface OrderService {
    * @author : jieun(je-pa)
    */
   ReceiverInfoResponse updateReceiverInfo(Long memberId, Long orderId, ReceiverInfoRequest request);
+
+  UpdateShippingResponse updateShipping(Long memberId, Long orderId, LocalDateTime now);
 }

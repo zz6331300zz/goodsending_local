@@ -70,11 +70,28 @@ public class Order extends BaseEntity {
     return this.bid.getMember().getMemberId().equals(memberId);
   }
 
+  public boolean isSellerId(Long memberId){
+    return this.bid.getProduct().getMember().getMemberId().equals(memberId);
+  }
+
   public Order updateReceiverInfo(ReceiverInfoRequest request){
     this.receiverAddress = request.receiverAddress();
     this.receiverName = request.receiverName();
     this.receiverCellNumber = request.receiverCellNumber();
     this.status = OrderStatus.PENDING;
     return this;
+  }
+
+  public Order updateShipping(LocalDateTime deliveryDateTime){
+    this.status = OrderStatus.SHIPPING;
+    this.deliveryDateTime = deliveryDateTime;
+    return this;
+  }
+
+  public boolean isPending(){
+    return this.receiverCellNumber != null &&
+        this.receiverAddress != null &&
+        this.receiverName != null &&
+        this.status == OrderStatus.PENDING;
   }
 }

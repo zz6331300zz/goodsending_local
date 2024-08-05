@@ -11,4 +11,6 @@ import java.util.Optional;
  */
 public interface OrderQueryDslRepository {
   Optional<Order> findOrderWithBidById(Long orderId);
+
+  Optional<Order> findOrderWithBidAndProductById(Long orderId);
 }
