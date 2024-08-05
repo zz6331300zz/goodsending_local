@@ -57,7 +57,7 @@ public class MailController {
    */
   @Operation(summary = "인증코드 확인", description = "redis에 저장된 인증코드 번호와 일치하는지 확인")
   @GetMapping("/members/checkCode")
-  public ResponseEntity<String> checkCode(@RequestParam String email, @RequestParam String code) {
+  public ResponseEntity<Boolean> checkCode(@RequestParam String email, @RequestParam String code) {
     return mailService.checkCode(email, code);
   }
 
