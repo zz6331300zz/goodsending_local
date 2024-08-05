@@ -46,3 +46,4 @@ cloud:
 front:
   list:
     ${FRONT_URL_1}, ${FRONT_URL_2}, ${FRONT_URL_3}
+  domain: ${COOKIE_SET_DOMAIN}
