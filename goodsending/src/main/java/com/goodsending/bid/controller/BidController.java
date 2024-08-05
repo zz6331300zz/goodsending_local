@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/bid")
+@RequestMapping("/api/bids")
 public class BidController {
 
   private final BidFacade bidFacade;
