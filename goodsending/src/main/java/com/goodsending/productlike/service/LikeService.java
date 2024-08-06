@@ -4,17 +4,17 @@ import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
-import com.goodsending.product.dto.response.ProductCreateResponseDto;
+import com.goodsending.product.dto.response.ProductlikeCountDto;
 import com.goodsending.product.entity.Product;
+import com.goodsending.product.entity.ProductImage;
+import com.goodsending.product.repository.ProductImageRepository;
 import com.goodsending.product.repository.ProductRepository;
 import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.entity.Like;
 import com.goodsending.productlike.repository.LikeCountRankingRankingRepository;
 import com.goodsending.productlike.repository.LikeRepository;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
@@ -23,8 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +37,7 @@ public class LikeService {
   private final LikeRepository likeRepository;
   private final MemberRepository memberRepository;
   private final ProductRepository productRepository;
+  private final ProductImageRepository productImageRepository;
   private final LikeCountRankingRankingRepository likeCountRankingRepository;
 
   @Transactional
@@ -85,7 +84,7 @@ public class LikeService {
 
   }
 
-  public Page<ProductCreateResponseDto> getLikeProductsPage(Long memberId, int page, int size,
+  public Page<ProductlikeCountDto> getLikeProductsPage(Long memberId, int page, int size,
       String sortBy, boolean isAsc) {
     Member member = findMemberById(memberId);
     Sort.Direction direction = isAsc ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -93,12 +92,12 @@ public class LikeService {
     Pageable pageable = PageRequest.of(page, size, sort);
 
     Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
-    return productList.map(ProductCreateResponseDto::from);
+    return productList.map(ProductlikeCountDto::from);
   }
 
-  public List<ProductCreateResponseDto> getTop5LikeProduct(LocalDateTime dateTime) {
+  public List<ProductlikeCountDto> getTop5LikeProduct(LocalDateTime dateTime) {
     return productRepository.findTop5ByStartDateTimeAfterOrderByLikeCountDesc(dateTime).stream()
-        .map(ProductCreateResponseDto::from).toList();
+        .map(ProductlikeCountDto::from).toList();
   }
 
   @Transactional
@@ -114,13 +113,12 @@ public class LikeService {
         like = new Like(product, member);
         likeRepository.save(like);
         countLike(product);
-        likeCountRankingRepository.setZSetValue("ranking", product.getName(),
+        likeCountRankingRepository.setZSetValue("ranking", String.valueOf(product.getId()),
             product.getLikeCount());
-        likeCountRankingRepository.setExpire("ranking", 50);
 
         Long startDateTime = product.getStartDateTime().toEpochSecond(ZoneOffset.UTC);
         likeCountRankingRepository.setHashValue("product_start_date_time",
-            product.getName(), startDateTime.toString());
+            String.valueOf(product.getId()), startDateTime.toString());
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
       }
@@ -130,18 +128,15 @@ public class LikeService {
       likeRepository.delete(like);
       countLike(product);
 
-      likeCountRankingRepository.deleteZSetValue("ranking", product.getName(),
-          product.getLikeCount().toString());
-      Long startDateTime = product.getStartDateTime().toEpochSecond(ZoneOffset.UTC);
-      likeCountRankingRepository.deleteHashValue("product_start_date_time", product.getName(),
-          startDateTime.toString());
+      likeCountRankingRepository.setZSetValue("ranking", String.valueOf(product.getId()),
+          product.getLikeCount());
 
       return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
-  public List<ProductCreateResponseDto> read(LocalDateTime dateTime) {
+  public List<ProductlikeCountDto> read(LocalDateTime dateTime) {
     Set<TypedTuple<String>> allProducts = likeCountRankingRepository.getZSetTupleByKey(
         "ranking", 0, -1);
     LocalDateTime now = dateTime;
@@ -160,20 +155,20 @@ public class LikeService {
         .limit(5)
         .map(tuple -> {
           String productId = tuple.getValue();
-          Double score = tuple.getScore();
-          Long startDateTimeTimestamp =
-              Long.valueOf(
-                  likeCountRankingRepository.getHashValueByKey("product_start_date_time", productId));
-          LocalDateTime startDateTime = toLocalDateTime(startDateTimeTimestamp, ZoneOffset.UTC);
-          return ProductCreateResponseDto.from(productId, score.longValue(),
-              startDateTime);
+          Product product = findProductById(Long.parseLong(productId));
+          String productName = product.getName();
+          Long likeCount = product.getLikeCount();
+          int price = product.getPrice();
+          LocalDateTime startDateTime = product.getStartDateTime();
+          LocalDateTime maxEndDateTime = product.getMaxEndDateTime();
+          ProductImage productImage = productImageRepository.findFirstByProduct(product);
+          String url = productImage.getUrl();
+          if (startDateTime == null) {
+            startDateTime = now;
+          }
+          return ProductlikeCountDto.from(productName, likeCount,
+              startDateTime, maxEndDateTime, price, url);
         })
         .toList();
   }
-
-  public static LocalDateTime toLocalDateTime(long epochSecond, ZoneId zoneId) {
-    Instant instant = Instant.ofEpochSecond(epochSecond);
-    return LocalDateTime.ofInstant(instant, zoneId);
-  }
-
 }

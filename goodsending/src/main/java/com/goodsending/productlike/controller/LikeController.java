@@ -1,7 +1,7 @@
 package com.goodsending.productlike.controller;
 
 import com.goodsending.global.security.anotation.MemberId;
-import com.goodsending.product.dto.response.ProductCreateResponseDto;
+import com.goodsending.product.dto.response.ProductlikeCountDto;
 import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.service.LikeService;
@@ -36,7 +36,7 @@ public class LikeController {
 
   @Operation(summary = "찜한 상품 목록 조회 페이징", description = "회원의 찜한 목록이 조회된다.")
   @GetMapping("/likes")
-  public ResponseEntity<Page<ProductCreateResponseDto>> getLikeProductsPage(
+  public ResponseEntity<Page<ProductlikeCountDto>> getLikeProductsPage(
       @MemberId Long memberId,
       @RequestParam("page") int page,
       @RequestParam("size") int size,
@@ -49,7 +49,7 @@ public class LikeController {
 
   @Operation(summary = "찜하기 수 top5 상품 조회", description = "찜하기 수 top5 상품조회 한다.")
   @GetMapping("/likes/top5")
-  public ResponseEntity<List<ProductCreateResponseDto>> getTop5LikeProduct(
+  public ResponseEntity<List<ProductlikeCountDto>> getTop5LikeProduct(
   ) {
     LocalDateTime dateTime = LocalDateTime.now();
     return ResponseEntity.ok(
@@ -60,14 +60,12 @@ public class LikeController {
   @PostMapping("/likes/redis")
   public ResponseEntity<LikeResponseDto> create(@MemberId Long memberId,
       @RequestBody @Valid LikeRequestDto requestDto) {
-    LocalDateTime dateTime = LocalDateTime.now();
     return likeService.toggleLikeRedis(memberId, requestDto);
   }
 
-
   @Operation(summary = "찜하기 수 top5 상품 조회 redis", description = "찜하기 수 top5 상품조회 한다. redis")
   @GetMapping("/likes/redis")
-  public ResponseEntity<List<ProductCreateResponseDto>> read() {
+  public ResponseEntity<List<ProductlikeCountDto>> read() {
     LocalDateTime dateTime = LocalDateTime.now();
     return ResponseEntity.ok(likeService.read(dateTime));
   }
