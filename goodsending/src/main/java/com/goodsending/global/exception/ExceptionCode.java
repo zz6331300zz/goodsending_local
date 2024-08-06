@@ -44,6 +44,7 @@ public enum ExceptionCode {
   // FORBIDDEN:403:권한이슈
   RECEIVER_ID_MISMATCH(FORBIDDEN, "수신자만이 수신 정보를 변경할 수 있습니다."),
   SELLER_ID_MISMATCH(FORBIDDEN, "상품 판매자만이 수신 정보를 변경할 수 있습니다."),
+  ONLY_SELF_ACCESS(FORBIDDEN, "본인의 정보만 조회가 가능합니다."),
 
   // NOT_FOUND:404:자원없음
   PRODUCT_NOT_FOUND(NOT_FOUND, "경매 상품 개체를 찾지 못했습니다."),

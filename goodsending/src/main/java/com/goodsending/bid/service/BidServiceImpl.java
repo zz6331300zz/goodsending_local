@@ -1,7 +1,9 @@
 package com.goodsending.bid.service;
 
+import com.goodsending.bid.dto.request.BidListByMemberRequest;
 import com.goodsending.bid.dto.request.BidRequest;
 import com.goodsending.bid.dto.response.BidResponse;
+import com.goodsending.bid.dto.response.BidWithProductResponse;
 import com.goodsending.bid.entity.Bid;
 import com.goodsending.bid.repository.BidRepository;
 import com.goodsending.bid.repository.ProductBidPriceMaxRepository;
@@ -13,13 +15,14 @@ import com.goodsending.product.entity.Product;
 import com.goodsending.product.repository.ProductRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @Date : 2024. 07. 25.
  * @Team : GoodsEnding
- * @author : jieun
+ * @author : jieun(je-pa)
  * @Project : goodsending-be :: goodsending
  */
 @Service
@@ -39,7 +42,7 @@ public class BidServiceImpl implements BidService {
    * @param memberId 입찰자 id
    * @param request  입찰 정보
    * @return 생성된 입찰 정보를 반환합니다.
-   * @author : jieun
+   * @author : jieun(je-pa)
    */
   @Override
   @Transactional
@@ -64,6 +67,21 @@ public class BidServiceImpl implements BidService {
     product.setBiddingCount(bidRepository.countByProduct(product));
 
     return BidResponse.from(save);
+  }
+
+  /**
+   * 멤버별 입찰 내역 리스트 조회
+   * @param request 조회에 사용되는 필드들을 담은 dto
+   * @return 커서기반 페이징 처리된 입찰 내역 리스트
+   * @author : jieun(je-pa)
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public Slice<BidWithProductResponse> readByMember(BidListByMemberRequest request) {
+    if(request.loginMemberId() != request.memberId()){
+      throw CustomException.from(ExceptionCode.ONLY_SELF_ACCESS);
+    }
+    return bidRepository.findBidWithProductResponseList(request);
   }
 
   private void validBidPriceOrThrow(Product product, Integer amount) {

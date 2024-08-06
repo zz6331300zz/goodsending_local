@@ -1,7 +1,7 @@
 package com.goodsending.global.redis.handler;
 
 import com.goodsending.bid.entity.Bid;
-import com.goodsending.bid.repository.BidQueryDslRepository;
+import com.goodsending.bid.repository.BidRepository;
 import com.goodsending.bid.type.BidStatus;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BidPriceMaxKeyExpirationHandler implements RedisMessageHandler {
 
-  private final BidQueryDslRepository bidQueryDslRepository;
+  private final BidRepository bidRepository;
   private final OrderRepository orderRepository;
 
   /**
@@ -44,7 +44,7 @@ public class BidPriceMaxKeyExpirationHandler implements RedisMessageHandler {
   @Transactional
   public void handle(String message) {
     long productId = Long.parseLong(message.split(":")[1]);
-    List<Bid> bids = bidQueryDslRepository.findByProductId(productId);
+    List<Bid> bids = bidRepository.findByProductId(productId);
     if (bids.isEmpty()) {
       throw CustomException.from(ExceptionCode.BID_NOT_FOUND);
     }

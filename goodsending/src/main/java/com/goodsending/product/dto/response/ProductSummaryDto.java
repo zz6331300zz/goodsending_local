@@ -1,13 +1,8 @@
 package com.goodsending.product.dto.response;
 
-import com.goodsending.product.entity.Product;
-import com.goodsending.product.entity.ProductImage;
 import com.querydsl.core.annotations.QueryProjection;
 import java.time.LocalDateTime;
-import java.util.List;
-import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.domain.Page;
 
 @Getter
 public class ProductSummaryDto {
