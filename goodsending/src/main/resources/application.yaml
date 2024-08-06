@@ -32,6 +32,10 @@ spring:
     redis:
       host: localhost
       port: 6379
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 50MB
 cloud:
   aws:
     credentials:
