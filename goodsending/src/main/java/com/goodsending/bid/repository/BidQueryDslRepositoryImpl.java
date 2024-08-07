@@ -66,6 +66,7 @@ public class BidQueryDslRepositoryImpl implements BidQueryDslRepository {
                 product.startDateTime,
                 product.dynamicEndDateTime,
                 product.maxEndDateTime,
+                product.status,
                 productImage.url
             )
         ))
