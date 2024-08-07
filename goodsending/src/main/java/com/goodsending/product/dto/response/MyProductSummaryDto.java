@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Getter
-public class ProductSummaryDto {
+public class MyProductSummaryDto {
 
   private Long productId;
   private String name;
@@ -14,11 +14,10 @@ public class ProductSummaryDto {
   private LocalDateTime dynamicEndDateTime;
   private LocalDateTime maxEndDateTime;
   private String thumbnailUrl;
-  // TODO : 입찰 여부 필드
 
   @QueryProjection
-  public ProductSummaryDto(Long productId, String name, int price, LocalDateTime startDateTime, LocalDateTime dynamicEndDateTime,
-      LocalDateTime maxEndDateTime, String thumbnailUrl) {
+  public MyProductSummaryDto(Long productId, String name, int price, LocalDateTime startDateTime,
+      LocalDateTime dynamicEndDateTime, LocalDateTime maxEndDateTime, String thumbnailUrl) {
     this.productId = productId;
     this.name = name;
     this.price = price;
@@ -27,5 +26,4 @@ public class ProductSummaryDto {
     this.maxEndDateTime = maxEndDateTime;
     this.thumbnailUrl = thumbnailUrl;
   }
-
 }

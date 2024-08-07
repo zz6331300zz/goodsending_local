@@ -2,6 +2,7 @@ package com.goodsending.product.service;
 
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.request.ProductUpdateRequestDto;
+import com.goodsending.product.dto.response.MyProductSummaryDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
@@ -26,4 +27,6 @@ public interface ProductService {
       LocalDateTime now);
 
   void deleteProduct(Long productId, Long memberId, LocalDateTime now);
+
+  Slice<MyProductSummaryDto> getMyProductSlice(Long memberId, int size, Long cursorId);
 }

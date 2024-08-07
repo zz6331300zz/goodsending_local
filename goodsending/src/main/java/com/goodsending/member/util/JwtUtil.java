@@ -26,8 +26,10 @@ public class JwtUtil {
   public static final String MEMBER_ID_KEY = "memberId";
   // Token 식별자
   public static final String BEARER_PREFIX = "Bearer ";
-  // 토큰 만료시간
-  private final long TOKEN_TIME = 60 * 60 * 1000L; // 60분
+  // Access 토큰 만료시간
+  private final long TOKEN_TIME = 1000L * 60 * 30; // 30분
+  // Refresh 토큰
+  public static final long REFRESH_TOKEN_TIME = 1000L * 60 * 60 * 24 * 14; // 14일
 
   @Value("${spring.jwt.secret}") // Base64 Encode 한 SecretKey
   private String secretKey;
@@ -44,7 +46,7 @@ public class JwtUtil {
     key = Keys.hmacShaKeyFor(bytes);
   }
 
-  // 토큰 생성
+  // Access 토큰 생성
   public String createToken(Long memberId, String email, MemberRole role) {
     Date date = new Date();
 
@@ -57,6 +59,17 @@ public class JwtUtil {
             .setIssuedAt(date) // 발급일
             .signWith(key, signatureAlgorithm) // 암호화 알고리즘
             .compact();
+  }
+
+  // Refresh 토큰 생성
+  public String createRefreshToken() {
+    Date date = new Date();
+
+    return Jwts.builder()
+        .setExpiration(new Date(date.getTime() + REFRESH_TOKEN_TIME)) // 만료 시간
+        .setIssuedAt(date) // 발급일
+        .signWith(key, signatureAlgorithm) // 암호화 알고리즘
+        .compact();
   }
 
   // header 에서 JWT 가져오기

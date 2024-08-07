@@ -13,6 +13,6 @@ public class LoginRequestDto {
   private String email;
 
   @NotBlank(message = "비밀번호가 입력되지 않았습니다.")
-  @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]{8,15}$")
+  @ValidPassword
   private String password;
 }

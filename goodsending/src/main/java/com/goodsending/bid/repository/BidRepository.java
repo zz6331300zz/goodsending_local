@@ -12,7 +12,8 @@ import org.springframework.data.jpa.repository.Query;
  * @author : jieun
  * @Project : goodsending-be :: goodsending
  */
-public interface BidRepository extends JpaRepository<Bid, Long> {
+public interface BidRepository extends JpaRepository<Bid, Long>, BidQueryDslRepository {
   @Query("SELECT COUNT(b) FROM Bid b WHERE b.product = :product")
   Long countByProduct(@Param("product") Product product);
+
 }

@@ -3,7 +3,9 @@ package com.goodsending.product.repository;
 import static com.goodsending.product.entity.QProduct.product;
 import static com.goodsending.product.entity.QProductImage.productImage;
 
+import com.goodsending.product.dto.response.MyProductSummaryDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
+import com.goodsending.product.dto.response.QMyProductSummaryDto;
 import com.goodsending.product.dto.response.QProductSummaryDto;
 import com.goodsending.product.entity.Product;
 import com.querydsl.core.BooleanBuilder;
@@ -154,6 +156,46 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     combinedProducts.addAll(closedFetch);
 
     return new SliceImpl<>(combinedProducts, pageable, hasNext);
+  }
+
+  @Override
+  public Slice<MyProductSummaryDto> findProductByMember(Long memberId, Pageable pageable, Long cursorId) {
+
+    BooleanBuilder cursorBuilder = new BooleanBuilder();
+    if (cursorId != null) {
+      cursorBuilder.and(product.id.lt(cursorId));
+    }
+
+    List<MyProductSummaryDto> myFetch = jpaQueryFactory
+        .select(new QMyProductSummaryDto(
+            product.id,
+            product.name,
+            product.price,
+            product.startDateTime,
+            product.dynamicEndDateTime,
+            product.maxEndDateTime,
+            productImage.url))
+        .from(product)
+        .leftJoin(productImage).on(productImage.product.eq(product))
+        .where(product.member.memberId.eq(memberId).and(cursorBuilder)
+            .and(productImage.id.eq(JPAExpressions
+                                    .select(productImage.id.min())
+                                    .from(productImage)
+                                    .where(productImage.product.eq(product))
+                                    )
+            )
+        )
+        .limit(pageable.getPageSize() + 1)
+        .orderBy(product.id.desc())
+        .fetch();
+
+    boolean hasNext = false;
+    if (myFetch.size() > pageable.getPageSize()) {
+      hasNext = true;
+      myFetch.remove(pageable.getPageSize());
+    }
+
+    return new SliceImpl<>(myFetch, pageable, hasNext);
   }
 
   private boolean openCase(Product firstOpenProduct, Product lastOpenProduct,

@@ -10,6 +10,7 @@ import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.request.ProductUpdateRequestDto;
+import com.goodsending.product.dto.response.MyProductSummaryDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductImageCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
@@ -112,12 +113,11 @@ public class ProductServiceImpl implements ProductService {
    * @return 경매 상품 상세 정보 반환
    */
   @Override
+  @Transactional(readOnly = true)
   public ProductInfoDto getProduct(Long productId) {
 
     Product product = findProduct(productId);
     List<ProductImage> productImageList = findProductImageList(product);
-
-    // TODO: 입찰 여부 확인 로직 구현
 
     return ProductInfoDto.of(product, productImageList);
   }
@@ -136,6 +136,7 @@ public class ProductServiceImpl implements ProductService {
    * @author : puclpu
    */
   @Override
+  @Transactional(readOnly = true)
   public Slice<ProductSummaryDto> getProductSlice(LocalDateTime now, String openProduct,
       String closedProduct, String keyword, LocalDateTime cursorStartDateTime, Long cursorId, int size) {
     Pageable pageable = PageRequest.of(0, size);
@@ -246,6 +247,22 @@ public class ProductServiceImpl implements ProductService {
 
     // 상품 삭제
     productRepository.delete(product);
+  }
+
+  /**
+   * 내가 판매 중인 경매 상품 목록 조회
+   * @param memberId 사용자 아이디
+   * @param size 조회할 상품 개수
+   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
+   * @return 등록한 경매 상품 목록
+   * @author : puclpu
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public Slice<MyProductSummaryDto> getMyProductSlice(Long memberId, int size, Long cursorId) {
+    Pageable pageable = PageRequest.of(0, size);
+    Slice<MyProductSummaryDto> myProductSummaryDtoList = productRepository.findProductByMember(memberId, pageable, cursorId);
+    return myProductSummaryDtoList;
   }
 
   private List<ProductImage> findProductImageList(Product product) {

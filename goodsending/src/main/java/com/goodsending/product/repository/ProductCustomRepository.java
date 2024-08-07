@@ -1,5 +1,6 @@
 package com.goodsending.product.repository;
 
+import com.goodsending.product.dto.response.MyProductSummaryDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
 import com.goodsending.product.entity.Product;
 import java.time.LocalDateTime;
@@ -14,4 +15,5 @@ public interface ProductCustomRepository {
   Slice<ProductSummaryDto> findByFiltersAndSort(LocalDateTime now, String openProduct, String closedProduct, String keyword,
       LocalDateTime cursorStartDateTime, Long cursorId, Pageable pageable);
 
+  Slice<MyProductSummaryDto> findProductByMember(Long memberId, Pageable pageable, Long cursorId);
 }

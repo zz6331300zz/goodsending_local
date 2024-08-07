@@ -32,6 +32,10 @@ spring:
     redis:
       host: localhost
       port: 6379
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 50MB
 cloud:
   aws:
     credentials:
@@ -46,3 +50,4 @@ cloud:
 front:
   list:
     ${FRONT_URL_1}, ${FRONT_URL_2}, ${FRONT_URL_3}
+  domain: ${COOKIE_SET_DOMAIN}
