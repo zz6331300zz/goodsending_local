@@ -83,7 +83,7 @@ public class WebSecurityConfig {
             .permitAll() // resources 접근 허용 설정
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/check").permitAll()
             .requestMatchers("/ws", "/api/members/sendMail", "/api/members/signup",
-                "/api/members/login", "/api/members/checkCode").permitAll()
+                "/api/members/login", "/api/members/checkCode", "/api/members/tokenReissue").permitAll()
             //.requestMatchers("/").permitAll()
             .anyRequest().authenticated() // 그 외 모든 요청 인증처리
     );

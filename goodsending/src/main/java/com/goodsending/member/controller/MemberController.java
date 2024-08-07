@@ -7,6 +7,7 @@ import com.goodsending.member.dto.request.SignupRequestDto;
 import com.goodsending.member.dto.response.MemberInfoDto;
 import com.goodsending.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +98,21 @@ public class MemberController {
   public ResponseEntity<Void> updateCash(@PathVariable("memberId") Long pathMemberId,
       @MemberId Long memberId, @RequestBody CashRequestDto cashRequestDto) {
     return memberService.updateCash(pathMemberId, memberId, cashRequestDto);
+  }
+
+  /**
+   * Access Token 재발급
+   * <p>
+   * Access Token이 만료 된 회원은 Refresh Token 기간이 남아 있다면 재발급 받을 수 있다.
+   *
+   * @param HttpServletRequest
+   * @return MemberService 반환합니다.
+   * @author : 이아람
+   */
+  @Operation(summary = "Access Token 재발급 기능", description = "Access Token 재발급")
+  @PostMapping("/members/tokenReissue")
+  public ResponseEntity<Void> tokenReissue(HttpServletRequest request) {
+    return memberService.tokenReissue(request);
   }
 }
 

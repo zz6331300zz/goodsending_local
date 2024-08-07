@@ -40,6 +40,8 @@ public enum ExceptionCode {
   // Unauthorized:401:인증이슈
   MEMBER_PASSWORD_INCORRECT(UNAUTHORIZED, "현재 비밀번호가 일치하지 않습니다."),
   INVALID_TOKEN(UNAUTHORIZED, "토큰이 유효하지 않습니다."),
+  STORED_TOKEN_HAS_EXPIRED(UNAUTHORIZED, "저장된 토큰이 만료되었습니다."),
+  TOKEN_MISMATCH(UNAUTHORIZED, "토큰이 일지하지 않습니다."),
 
   // FORBIDDEN:403:권한이슈
   RECEIVER_ID_MISMATCH(FORBIDDEN, "수신자만이 수신 정보를 변경할 수 있습니다."),

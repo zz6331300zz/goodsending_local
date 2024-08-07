@@ -9,9 +9,16 @@ import com.goodsending.member.dto.response.MemberInfoDto;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.repository.SaveMailAndCodeRepository;
+import com.goodsending.member.repository.SaveRefreshTokenRepository;
 import com.goodsending.member.type.MemberRole;
+import com.goodsending.member.util.JwtUtil;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,10 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- *
+ * @author : 이아람
  * @Date : 2024. 07. 23. / 2024. 07. 29
  * @Team : GoodsEnding
- * @author : 이아람
  * @Project : goodsending-be :: goodsending
  */
 
@@ -33,6 +39,8 @@ public class MemberService {
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final SaveMailAndCodeRepository saveMailAndCodeRepository;
+  private final JwtUtil jwtUtil;
+  private final SaveRefreshTokenRepository saveRefreshTokenRepository;
 
   // TODO : 관리자 할 경우 ADMIN_TOKEN 생성
   //private final String ADMIN_TOKEN = "1234";
@@ -52,7 +60,7 @@ public class MemberService {
     if (checkEmail.isPresent()) {
       throw CustomException.from(ExceptionCode.EMAIL_ALREADY_EXISTS);
     }
-    
+
     // redis에 저장되어있는 code와 일치하는지 확인
     String storedCode = saveMailAndCodeRepository.getValueByKey(signupRequestDto.getEmail());
     if (storedCode == null) {
@@ -88,7 +96,7 @@ public class MemberService {
   /**
    * 회원 정보 조회
    * <p>
-   *DB에서 memberId 값 확인 후 MemberInfoDto 가져옵니다.
+   * DB에서 memberId 값 확인 후 MemberInfoDto 가져옵니다.
    *
    * @param 로그인 한 회원희 memberId
    * @return MemberInfoDto 반환합니다.
@@ -109,7 +117,8 @@ public class MemberService {
    * @author : 이아람
    */
   @Transactional
-  public ResponseEntity<Void> updatePassword(Long pathMemberId, Long memberId, PasswordRequestDto passwordRequestDto) {
+  public ResponseEntity<Void> updatePassword(Long pathMemberId, Long memberId,
+      PasswordRequestDto passwordRequestDto) {
     if (!pathMemberId.equals(memberId)) {
       throw CustomException.from(ExceptionCode.MEMBER_ID_MISMATCH);
     }
@@ -160,5 +169,66 @@ public class MemberService {
   private Member findByMemberId(Long memberId) {
     return memberRepository.findById(memberId)
         .orElseThrow(() -> CustomException.from(ExceptionCode.USER_NOT_FOUND));
+  }
+
+  /**
+   * Access Token 재발급
+   * <p>
+   * Access Token이 만료 된 회원은 Refresh Token 기간이 남아 있다면 재발급 받을 수 있다.
+   *
+   * @param email, HttpServletRequest
+   * @return status 상태코드 반환합니다.
+   * @author : 이아람
+   */
+  public ResponseEntity<Void> tokenReissue(HttpServletRequest request) {
+    // 쿠키에서 refresh token 가져오기
+    String cookieRefreshToken = getRefreshTokenFromCookie(request);
+    if (cookieRefreshToken == null) {
+      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
+    }
+    // 쿠키에서 가져온 refresh token에서 email 정보 추출
+    String email;
+    try {
+      Claims claims = jwtUtil.getUserInfoFromToken(cookieRefreshToken);
+      email = claims.getSubject();
+    } catch (JwtException e) {
+      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
+    }
+    
+    // redis에 저장된 refresh token 가져오기
+    String redisRefreshToken = saveRefreshTokenRepository.getValueByKey(email);
+    if (redisRefreshToken == null) {
+      throw CustomException.from(ExceptionCode.STORED_TOKEN_HAS_EXPIRED);
+    }
+    if (!cookieRefreshToken.equals(redisRefreshToken)) {
+      throw CustomException.from(ExceptionCode.TOKEN_MISMATCH);
+    }
+
+    Optional<Member> memberOptional = memberRepository.findByEmail(email);
+    if (memberOptional.isEmpty()) {
+      throw CustomException.from(ExceptionCode.MEMBER_NOT_FOUND);
+    }
+    Member member = memberOptional.get();
+    
+    // 새로운 Access Token 생성
+    String newAccessToken = jwtUtil.createToken(member.getMemberId(), member.getEmail(),
+        member.getRole());
+    // header에 추가
+    HttpHeaders header = new HttpHeaders();
+    header.set(JwtUtil.AUTHORIZATION_HEADER, newAccessToken);
+    return new ResponseEntity<>(header, HttpStatus.OK);
+  }
+
+  // 쿠키에서 Refresh Token 추출
+  private String getRefreshTokenFromCookie(HttpServletRequest request) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if ("refresh_token".equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+    return null;
   }
 }
