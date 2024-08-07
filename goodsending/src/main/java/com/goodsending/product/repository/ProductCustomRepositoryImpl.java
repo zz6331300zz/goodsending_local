@@ -222,7 +222,6 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     } else {
       return pageSize + 1;
     }
-    return new BooleanBuilder(product.name.containsIgnoreCase(keyword));
   }
 
   private BooleanExpression openBuilderExpression(LocalDateTime now) {

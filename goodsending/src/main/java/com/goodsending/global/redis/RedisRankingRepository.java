@@ -26,16 +26,8 @@ public abstract class RedisRankingRepository<K, V> {
     redisTemplate.opsForHash().put(PREFIX + key, hashKey, value);
   }
 
-  public void deleteZSetValue(K key, V value, Object score) {
-    redisTemplate.opsForZSet().remove(PREFIX + key, value, score);
-  }
-
-  public void deleteHashValue(K key, V value, Object score) {
-    redisTemplate.opsForHash().delete(PREFIX + key, value, score);
-  }
-
   public String getHashValueByKey(K key, String hashKey) {
-    return (String)redisTemplate.opsForHash()
+    return (String) redisTemplate.opsForHash()
         .get(PREFIX + key, hashKey);
   }
 

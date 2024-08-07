@@ -61,14 +61,4 @@ public class ProductCreateResponseDto {
         .maxEndDate(product.getMaxEndDateTime())
         .build();
   }
-
-  public static ProductCreateResponseDto from(String name, Long likeCount, LocalDateTime startDateTime) {
-    return ProductCreateResponseDto.builder()
-        .name(name)
-        .likeCount(likeCount)
-        .startDateTime(startDateTime)
-        .build();
-  }
-
-
 }
