@@ -1,11 +1,15 @@
 package com.goodsending.global.security;
 
+import com.goodsending.global.exception.CustomException;
+import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.member.util.JwtUtil;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,8 +19,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 @Slf4j(topic = "JWT 검증 및 인가")
 @RequiredArgsConstructor
@@ -30,8 +32,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
       FilterChain filterChain) throws ServletException, IOException {
 
     String tokenValue = jwtUtil.getJwtFromHeader(req);
-
-    if (StringUtils.hasText(tokenValue)) {
+    // 토큰이 존재하고 Refresh Token이 아닌 경우에만 처리
+    if (StringUtils.hasText(tokenValue)&& !isRefreshToken(tokenValue)) {
 
       if (!jwtUtil.validateToken(tokenValue)) {
         log.error("Token Error");
@@ -49,6 +51,19 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     }
 
     filterChain.doFilter(req, res);
+  }
+
+  private boolean isRefreshToken(String token) {
+    try {
+      // getUserInfoFromToken 메서드를 사용하여 클레임 추출
+      Claims claims = jwtUtil.getUserInfoFromToken(token);
+      // 'token_type' 클레임이 'refresh'인지 확인
+      String tokenType = (String) claims.get("token_type");
+      return "refresh".equals(tokenType);
+
+    } catch (JwtException e) {
+      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
+    }
   }
 
   // 인증 처리
