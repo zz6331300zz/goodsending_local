@@ -2,13 +2,18 @@ package com.goodsending.product.dto.response;
 
 import com.goodsending.product.entity.Product;
 import com.goodsending.product.entity.ProductImage;
+import com.goodsending.product.type.ProductStatus;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
+@Builder
 public class ProductInfoDto {
 
   private Long productId;
@@ -17,27 +22,17 @@ public class ProductInfoDto {
   private int price;
   private String introduction;
   private LocalDateTime startDateTime;
-  private LocalDateTime maxEndDate;
+  private LocalDateTime maxEndDateTime;
+  private LocalDateTime dynamicEndDateTime;
+  private Duration remainingExpiration;
   private int biddingCount;
+  private int bidderCount;
+  private Long likeCount;
+  private ProductStatus status;
   private List<ProductImageInfoDto> productImages;
-  // TODO : 입찰 여부 필드
 
-  @Builder
-  public ProductInfoDto(Long productId, Long memberId, String name, int price, String introduction,
-      LocalDateTime startDateTime, LocalDateTime maxEndDate, int biddingCount,
-      List<ProductImageInfoDto> productImages) {
-    this.productId = productId;
-    this.memberId = memberId;
-    this.name = name;
-    this.price = price;
-    this.introduction = introduction;
-    this.startDateTime = startDateTime;
-    this.maxEndDate = maxEndDate;
-    this.biddingCount = biddingCount;
-    this.productImages = productImages;
-  }
-
-  public static ProductInfoDto of(Product product, List<ProductImage> productImageList) {
+  public static ProductInfoDto of(Product product, List<ProductImage> productImageList,
+      Duration remainingExpiration) {
 
     List<ProductImageInfoDto> productImages = new ArrayList<>();
     for (ProductImage productImage : productImageList) {
@@ -52,8 +47,13 @@ public class ProductInfoDto {
         .price(product.getPrice())
         .introduction(product.getIntroduction())
         .startDateTime(product.getStartDateTime())
-        .maxEndDate(product.getMaxEndDateTime())
+        .maxEndDateTime(product.getMaxEndDateTime())
+        .dynamicEndDateTime(product.getDynamicEndDateTime())
+        .remainingExpiration(remainingExpiration)
         .biddingCount(product.getBiddingCount())
+        .bidderCount(product.getBidderCount())
+        .likeCount(product.getLikeCount())
+        .status(product.getStatus())
         .productImages(productImages)
         .build();
   }

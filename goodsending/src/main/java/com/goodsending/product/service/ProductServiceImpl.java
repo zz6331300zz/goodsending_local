@@ -1,5 +1,6 @@
 package com.goodsending.product.service;
 
+import com.goodsending.bid.repository.ProductBidPriceMaxRepository;
 import com.goodsending.deposit.entity.Deposit;
 import com.goodsending.deposit.repository.DepositRepository;
 import com.goodsending.deposit.type.DepositStatus;
@@ -21,6 +22,7 @@ import com.goodsending.product.entity.ProductImage;
 import com.goodsending.product.repository.ProductImageRepository;
 import com.goodsending.product.repository.ProductRepository;
 import com.goodsending.product.type.ProductStatus;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
   private final S3Uploader s3Uploader;
   private final MemberRepository memberRepository;
   private final DepositRepository depositRepository;
+  private final ProductBidPriceMaxRepository productBidPriceMaxRepository;
 
   /**
    * 상품 등록
@@ -119,8 +122,9 @@ public class ProductServiceImpl implements ProductService {
 
     Product product = findProduct(productId);
     List<ProductImage> productImageList = findProductImageList(product);
+    Duration remainingExpiration = productBidPriceMaxRepository.getRemainingExpiration(productId);
 
-    return ProductInfoDto.of(product, productImageList);
+    return ProductInfoDto.of(product, productImageList, remainingExpiration);
   }
 
   /**
