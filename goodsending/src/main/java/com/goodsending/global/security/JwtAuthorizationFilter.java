@@ -2,6 +2,7 @@ package com.goodsending.global.security;
 
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
+import com.goodsending.member.repository.BlackListAccessTokenRepository;
 import com.goodsending.member.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -27,6 +28,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
   private final JwtUtil jwtUtil;
   private final MemberDetailsServiceImpl memberDetailsService;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private final BlackListAccessTokenRepository blackListAccessTokenRepository;
 
   @Override
   protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
@@ -36,22 +38,27 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     if (StringUtils.hasText(tokenValue)) {
       try {
+        // 블랙리스트 확인
+        if (isTokenBlacklisted(tokenValue)) {
+          throw CustomException.from(ExceptionCode.EXPIRED_JWT_TOKEN);
+        }
         // 1. 토큰 유효성 검사
         jwtUtil.validateToken(tokenValue);
 
         // 2. Refresh Token인지 확인
         if (isRefreshToken(tokenValue)) {
           throw CustomException.from(ExceptionCode.NOT_AN_ACCESS_TOKEN);
-        } else {
-          // 액세스 토큰인 경우, 사용자 정보 추출 및 인증 설정
-          Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
-          try {
-            setAuthentication(info.getSubject());
-          } catch (Exception e) {
-            log.error( e.getMessage());
-            throw CustomException.from(ExceptionCode.INVALID_TOKEN);
-          }
         }
+
+        // 액세스 토큰인 경우, 사용자 정보 추출 및 인증 설정
+        Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
+        try {
+          setAuthentication(info.getSubject());
+        } catch (Exception e) {
+          log.error(e.getMessage());
+          throw CustomException.from(ExceptionCode.INVALID_TOKEN);
+        }
+
       } catch (CustomException e) {
         // 예외 발생 시, jwtAuthenticationEntryPoint를 사용하여 응답 처리
         jwtAuthenticationEntryPoint.commence(req, res,
@@ -59,7 +66,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         return;
       }
     }
-
     // 필터 체인 진행
     filterChain.doFilter(req, res);
   }
@@ -70,6 +76,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     // 'token_type' 클레임이 'refresh'인지 확인
     String tokenType = (String) claims.get("token_type");
     return "refresh".equals(tokenType);
+  }
+
+  // Access Token이 블랙리스트에 있는지 확인
+  public boolean isTokenBlacklisted(String accessToken) {
+    return blackListAccessTokenRepository.hasKey(accessToken);
   }
 
   // 인증 처리

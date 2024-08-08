@@ -114,4 +114,10 @@ public class JwtUtil {
   public Claims getUserInfoFromToken(String token) {
     return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
   }
+
+  // Access token 만료시간 가져오기
+  public long getExpirationTime(String token) {
+    Claims claims = getUserInfoFromToken(token);
+    return claims.getExpiration().getTime();
+  }
 }

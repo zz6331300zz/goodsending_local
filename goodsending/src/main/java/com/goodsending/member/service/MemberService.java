@@ -7,6 +7,7 @@ import com.goodsending.member.dto.request.PasswordRequestDto;
 import com.goodsending.member.dto.request.SignupRequestDto;
 import com.goodsending.member.dto.response.MemberInfoDto;
 import com.goodsending.member.entity.Member;
+import com.goodsending.member.repository.BlackListAccessTokenRepository;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.member.repository.SaveMailAndCodeRepository;
 import com.goodsending.member.repository.SaveRefreshTokenRepository;
@@ -16,6 +17,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -41,6 +44,7 @@ public class MemberService {
   private final SaveMailAndCodeRepository saveMailAndCodeRepository;
   private final JwtUtil jwtUtil;
   private final SaveRefreshTokenRepository saveRefreshTokenRepository;
+  private final BlackListAccessTokenRepository blackListAccessTokenRepository;
 
   // TODO : 관리자 할 경우 ADMIN_TOKEN 생성
   //private final String ADMIN_TOKEN = "1234";
@@ -230,5 +234,46 @@ public class MemberService {
       }
     }
     return null;
+  }
+
+  /**
+   * 로그아웃
+   * <p>
+   * Refresh Token 삭제 & Access Token blacklist에 저장 및 사용 불가된다.
+   *
+   * @param HttpServletRequest, HttpServletResponse
+   * @return status 상태코드 반환합니다.
+   * @author : 이아람
+   */
+  public ResponseEntity<Void> deleteRefreshToken(HttpServletRequest request, HttpServletResponse response) {
+    // 쿠키에서 refresh token 가져오기
+    String cookieRefreshToken = getRefreshTokenFromCookie(request);
+    if (cookieRefreshToken == null) {
+      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
+    }
+    // email 추출
+    Claims claims = jwtUtil.getUserInfoFromToken(cookieRefreshToken);
+    String email = claims.getSubject();
+    // redis에서 삭제
+    saveRefreshTokenRepository.deleteByKey(email);
+
+    String cookieName = "refresh_token";
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (cookie.getName().equals(cookieName)) {
+          cookie.setMaxAge(0); // 쿠키 만료시간 0으로 설정
+          cookie.setValue(null);
+          cookie.setPath("/");
+          response.addCookie(cookie);
+          break;
+        }
+      }
+    }
+    String accessToken = jwtUtil.getJwtFromHeader(request);
+    // access token 만료 시간 계산
+    long expirationTime = jwtUtil.getExpirationTime(accessToken) - System.currentTimeMillis();
+    blackListAccessTokenRepository.setValue(accessToken, "true", Duration.ofMillis(expirationTime));
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 }

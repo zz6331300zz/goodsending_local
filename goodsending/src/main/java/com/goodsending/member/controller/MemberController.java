@@ -8,10 +8,12 @@ import com.goodsending.member.dto.response.MemberInfoDto;
 import com.goodsending.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -113,6 +115,21 @@ public class MemberController {
   @PostMapping("/members/tokenReissue")
   public ResponseEntity<Void> tokenReissue(HttpServletRequest request) {
     return memberService.tokenReissue(request);
+  }
+
+  /**
+   * 로그아웃
+   * <p>
+   * 로그아웃 하면 Refresh Token 삭제 & 기존에 발급받은 Access Token 사용 할 수 없다.
+   *
+   * @param HttpServletRequest, HttpServletResponse
+   * @return MemberService 반환합니다.
+   * @author : 이아람
+   */
+  @Operation(summary = "로그아웃 기능", description = "AccessToken, Refresh Token 삭제")
+  @DeleteMapping("/members/logout")
+  public ResponseEntity<Void> deleteRefreshToken(HttpServletRequest request, HttpServletResponse response) {
+    return memberService.deleteRefreshToken(request, response);
   }
 }
 
