@@ -145,4 +145,12 @@ public class Product extends BaseEntity {
     }
     this.biddingCount = (int)biddingCount.longValue();
   }
+
+  public void setBidderCount(Long bidderCount) {
+    if(bidderCount == null) {
+      this.bidderCount = 0;
+      return;
+    }
+    this.bidderCount = (int)bidderCount.longValue();
+  }
 }

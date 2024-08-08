@@ -67,8 +67,10 @@ public class BidServiceImpl implements BidService {
     // 입찰 내역이 생성된다.
     Bid save = bidRepository.save(Bid.of(member, product, request));
 
+    // 입찰수 변경
+    product.setBiddingCount(bidRepository.countByProduct(product.getId()));
     // 입찰자 수 변경
-    product.setBiddingCount(bidRepository.countByProduct(product));
+    product.setBidderCount(bidRepository.countDistinctMembersByProduct(product.getId()));
 
     // 입찰 메시지 이벤트 발행
     eventPublisher.publishEvent(CreateProductMessageEvent.of(

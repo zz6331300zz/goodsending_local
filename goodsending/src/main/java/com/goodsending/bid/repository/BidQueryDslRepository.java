@@ -13,6 +13,11 @@ import org.springframework.data.domain.Slice;
  * @Project : goodsending-be :: goodsending
  */
 public interface BidQueryDslRepository {
+
+  Long countByProduct(Long productId);
+
+  Long countDistinctMembersByProduct(Long productId);
+
   List<Bid> findByProductId(Long productId);
 
   Slice<BidWithProductResponse> findBidWithProductResponseList(BidListByMemberRequest bidListRequest);

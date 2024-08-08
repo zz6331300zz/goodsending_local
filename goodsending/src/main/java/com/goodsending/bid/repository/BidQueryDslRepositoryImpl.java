@@ -33,6 +33,24 @@ public class BidQueryDslRepositoryImpl implements BidQueryDslRepository {
   private final JPAQueryFactory queryFactory;
 
   @Override
+  public Long countByProduct(Long productId) {
+    return queryFactory
+        .select(bid.count())
+        .from(bid)
+        .where(bid.product.id.eq(productId))
+        .fetchOne();
+  }
+
+  @Override
+  public Long countDistinctMembersByProduct(Long productId) {
+    return queryFactory
+        .select(bid.member.countDistinct())
+        .from(bid)
+        .where(bid.product.id.eq(productId))
+        .fetchOne();
+  }
+
+  @Override
   public List<Bid> findByProductId(Long productId) {
     QBid bid = QBid.bid;
     return queryFactory

@@ -22,7 +22,9 @@ public record BidResponse(
 
     Long productId,
 
-    Integer biddingCount
+    Integer biddingCount,
+
+    Integer bidderCount
 
 ) {
 
@@ -34,6 +36,7 @@ public record BidResponse(
         .memberId(bid.getMember().getMemberId())
         .productId(bid.getProduct().getId())
         .biddingCount(bid.getProduct().getBiddingCount())
+        .bidderCount(builder().bidderCount)
         .build();
   }
 }

@@ -17,6 +17,7 @@ public record ProductMessageDto(
     String message,
     int price,
     int biddingCount,
+    int bidderCount,
     MessageType type
 ) {
   public static ProductMessageDto of(ProductMessageHistory history, int price){
@@ -26,6 +27,7 @@ public record ProductMessageDto(
         .message(history.getMessage())
         .price(price)
         .biddingCount(history.getProduct().getBiddingCount())
+        .bidderCount(history.getProduct().getBidderCount())
         .type(history.getType())
         .build();
   }

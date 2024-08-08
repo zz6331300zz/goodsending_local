@@ -2,6 +2,7 @@ package com.goodsending.global.redis.handler;
 
 import com.goodsending.bid.entity.Bid;
 import com.goodsending.bid.repository.BidRepository;
+import com.goodsending.bid.repository.ProductBidPriceMaxRepository;
 import com.goodsending.bid.type.BidStatus;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
@@ -9,6 +10,7 @@ import com.goodsending.member.entity.Member;
 import com.goodsending.order.entity.Order;
 import com.goodsending.order.repository.OrderRepository;
 import com.goodsending.product.entity.Product;
+import com.goodsending.product.type.ProductStatus;
 import com.goodsending.productmessage.event.CreateProductMessageEvent;
 import com.goodsending.productmessage.type.MessageType;
 import java.time.LocalDateTime;
@@ -47,7 +49,8 @@ public class BidPriceMaxKeyExpirationHandler implements RedisMessageHandler {
   @Override
   @Transactional
   public void handle(String message) {
-    long productId = Long.parseLong(message.split(":")[1]);
+    long productId = Long.parseLong(
+        message.substring(ProductBidPriceMaxRepository.KEY_PREFIX.length()));
     List<Bid> bids = bidRepository.findByProductId(productId);
     if (bids.isEmpty()) {
       throw CustomException.from(ExceptionCode.BID_NOT_FOUND);
@@ -59,8 +62,8 @@ public class BidPriceMaxKeyExpirationHandler implements RedisMessageHandler {
 
   private void setProduct(List<Bid> bids) {
     Product product = bids.get(0).getProduct();
-    product.setBiddingCount((long) bids.size());
     product.setDynamicEndDateTime(LocalDateTime.now());
+    product.setStatus(ProductStatus.ENDED);
   }
 
   private void handlerBids(List<Bid> bids) {
