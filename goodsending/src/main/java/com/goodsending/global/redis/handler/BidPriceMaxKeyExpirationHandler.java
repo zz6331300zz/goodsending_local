@@ -9,11 +9,14 @@ import com.goodsending.member.entity.Member;
 import com.goodsending.order.entity.Order;
 import com.goodsending.order.repository.OrderRepository;
 import com.goodsending.product.entity.Product;
+import com.goodsending.productmessage.event.CreateProductMessageEvent;
+import com.goodsending.productmessage.type.MessageType;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class BidPriceMaxKeyExpirationHandler implements RedisMessageHandler {
 
   private final BidRepository bidRepository;
   private final OrderRepository orderRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 낙찰자 자동 선정 후 주문 생성
@@ -64,6 +68,13 @@ public class BidPriceMaxKeyExpirationHandler implements RedisMessageHandler {
     Bid winningBid = bids.get(0);
     saveOrderByBid(winningBid);
     winningBid.setStatus(BidStatus.SUCCESSFUL);
+
+    // 낙찰 메시지 이벤트 발행
+    eventPublisher.publishEvent(CreateProductMessageEvent.of(
+        winningBid.getMember().getMemberId(),
+        winningBid.getProduct().getId(),
+        MessageType.AUCTION_WINNER,
+        winningBid.getPrice()));
 
     // 나머지 입찰자들에 대한 환불 처리
     Map<Member, Integer> cashRefunds = new HashMap<>();

@@ -45,11 +45,6 @@ public class BidFacadeImpl implements BidFacade {
             DestinationPrefix.TIME_REMAINING + bidResponse.productId(),
             remainingExpiration);
 
-        // 입찰자 수: 변동 사항을 알려준다.
-        messagingTemplate.convertAndSend(
-            DestinationPrefix.BIDDER_COUNT + bidResponse.productId(),
-            bidResponse.biddingCount());
-
         return BidWithDurationResponse.of(bidResponse, remainingExpiration);
       } catch (OptimisticLockException | OptimisticLockingFailureException e){
         Thread.sleep(50);
