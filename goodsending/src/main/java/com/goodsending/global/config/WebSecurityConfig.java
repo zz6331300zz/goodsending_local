@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -86,6 +87,7 @@ public class WebSecurityConfig {
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/check").permitAll()
             .requestMatchers("/ws", "/api/members/sendMail", "/api/members/signup",
                 "/api/members/login", "/api/members/checkCode", "/api/members/tokenReissue").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/product-message-histories").permitAll()
             //.requestMatchers("/").permitAll()
             .anyRequest().authenticated() // 그 외 모든 요청 인증처리
     );
