@@ -34,4 +34,12 @@ public abstract class RedisRankingRepository<K, V> {
   public Set<TypedTuple<V>> getZSetTupleByKey(K key, long start, long end) {
     return redisTemplate.opsForZSet().rangeWithScores(PREFIX + key, start, end);
   }
+
+  public void deleteZSetValue(K key) {
+    Long size = redisTemplate.opsForZSet().size(PREFIX + key);
+    if (size != null && size > 0) {
+      redisTemplate.opsForZSet().removeRange(PREFIX + key, 0, size - 1);
+    }
+  }
+
 }

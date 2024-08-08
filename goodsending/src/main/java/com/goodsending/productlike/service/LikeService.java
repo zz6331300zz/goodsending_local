@@ -1,5 +1,6 @@
 package com.goodsending.productlike.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.member.entity.Member;
@@ -12,12 +13,16 @@ import com.goodsending.product.repository.ProductRepository;
 import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.entity.Like;
-import com.goodsending.productlike.repository.LikeCountRankingRankingRepository;
+import com.goodsending.productlike.entity.ProductLikeDto;
+import com.goodsending.productlike.entity.ProductLikeWithScore;
+import com.goodsending.productlike.repository.LikeCountRankingRepository;
 import com.goodsending.productlike.repository.LikeRepository;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,7 +43,8 @@ public class LikeService {
   private final MemberRepository memberRepository;
   private final ProductRepository productRepository;
   private final ProductImageRepository productImageRepository;
-  private final LikeCountRankingRankingRepository likeCountRankingRepository;
+  private final LikeCountRankingRepository likeCountRankingRepository;
+  private final ObjectMapper objectMapper;
 
   @Transactional
   public ResponseEntity<LikeResponseDto> toggleLike(Long memberId, LikeRequestDto likeRequestDto) {
@@ -104,6 +110,9 @@ public class LikeService {
   public ResponseEntity<LikeResponseDto> toggleLikeRedis(Long memberId, LikeRequestDto requestDto) {
     Member member = findMemberById(memberId);
     Product product = findProductById(requestDto.getProductId());
+    ProductImage productImage = productImageRepository.findFirstByProduct(product);
+    ProductLikeDto productLikeDto = new ProductLikeDto(product.getName(), product.getStartDateTime(), product.getMaxEndDateTime(), product.getPrice(),
+        productImage.getUrl());
     boolean likeButton = requestDto.isPress();
     Like like = null;
     boolean existingLike = likeRepository.existsByMemberAndProduct(member, product);
@@ -113,12 +122,9 @@ public class LikeService {
         like = new Like(product, member);
         likeRepository.save(like);
         countLike(product);
-        likeCountRankingRepository.setZSetValue("ranking", String.valueOf(product.getId()),
+        likeCountRankingRepository.setZSetValue("ranking", productLikeDto,
             product.getLikeCount());
 
-        Long startDateTime = product.getStartDateTime().toEpochSecond(ZoneOffset.UTC);
-        likeCountRankingRepository.setHashValue("product_start_date_time",
-            String.valueOf(product.getId()), startDateTime.toString());
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
       }
@@ -128,7 +134,7 @@ public class LikeService {
       likeRepository.delete(like);
       countLike(product);
 
-      likeCountRankingRepository.setZSetValue("ranking", String.valueOf(product.getId()),
+      likeCountRankingRepository.setZSetValue("ranking", productLikeDto,
           product.getLikeCount());
 
       return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
@@ -136,39 +142,38 @@ public class LikeService {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
-  public List<ProductlikeCountDto> read(LocalDateTime dateTime) {
-    Set<TypedTuple<String>> allProducts = likeCountRankingRepository.getZSetTupleByKey(
+  public List<ProductLikeWithScore> read() {
+    Set<TypedTuple<ProductLikeDto>> allProducts = likeCountRankingRepository.getZSetTupleByKey(
         "ranking", 0, -1);
-    LocalDateTime now = dateTime;
-    double currentTimestamp = now.toEpochSecond(ZoneOffset.UTC);
 
-    return allProducts.stream()
-        .filter(tuple -> {
-          String productId = tuple.getValue();
-          Double score = tuple.getScore();
-          Long startDateTimeTimestamp = Long.valueOf(likeCountRankingRepository.getHashValueByKey(
-              "product_start_date_time", productId));
-          return startDateTimeTimestamp != null && startDateTimeTimestamp > currentTimestamp;
-        })
-        .sorted((t1, t2) -> Double.compare(t2.getScore(),
-            t1.getScore()))
-        .limit(5)
-        .map(tuple -> {
-          String productId = tuple.getValue();
-          Product product = findProductById(Long.parseLong(productId));
-          String productName = product.getName();
-          Long likeCount = product.getLikeCount();
-          int price = product.getPrice();
-          LocalDateTime startDateTime = product.getStartDateTime();
-          LocalDateTime maxEndDateTime = product.getMaxEndDateTime();
-          ProductImage productImage = productImageRepository.findFirstByProduct(product);
-          String url = productImage.getUrl();
-          if (startDateTime == null) {
-            startDateTime = now;
-          }
-          return ProductlikeCountDto.from(productName, likeCount,
-              startDateTime, maxEndDateTime, price, url);
-        })
-        .toList();
+    if (allProducts != null) {
+      return allProducts.stream()
+          .sorted(
+              (p1, p2) -> Double.compare(p2.getScore(), p1.getScore())) // Sort in descending order
+          .limit(5)
+          .map(tuple -> {
+            Object value = tuple.getValue();
+            ProductLikeDto dto = convertMapToDto((Map<String, Object>) value); // Convert Map to DTO
+            return new ProductLikeWithScore(dto, tuple.getScore());
+          })
+          .collect(Collectors.toList());
+    }
+
+    return Collections.emptyList();
+
+  }
+
+  private ProductLikeDto convertMapToDto(Map<String, Object> map) {
+    try {
+      return objectMapper.convertValue(map, ProductLikeDto.class);
+    } catch (IllegalArgumentException e) {
+      throw new RuntimeException("Error converting map to ProductLikeDto", e);
+    }
+  }
+
+
+  public void delete() {
+    likeCountRankingRepository.deleteZSetValue("ranking");
+    likeCountRankingRepository.deleteZSetValue("product_start_date_time");
   }
 }

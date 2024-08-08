@@ -4,6 +4,7 @@ import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.response.ProductlikeCountDto;
 import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
+import com.goodsending.productlike.entity.ProductLikeWithScore;
 import com.goodsending.productlike.service.LikeService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -65,8 +66,7 @@ public class LikeController {
 
   @Operation(summary = "찜하기 수 top5 상품 조회 redis", description = "찜하기 수 top5 상품조회 한다. redis")
   @GetMapping("/likes/redis")
-  public ResponseEntity<List<ProductlikeCountDto>> read() {
-    LocalDateTime dateTime = LocalDateTime.now();
-    return ResponseEntity.ok(likeService.read(dateTime));
+  public ResponseEntity<List<ProductLikeWithScore>> read() {
+    return ResponseEntity.ok(likeService.read());
   }
 }
