@@ -111,8 +111,9 @@ public class LikeService {
     Member member = findMemberById(memberId);
     Product product = findProductById(requestDto.getProductId());
     ProductImage productImage = productImageRepository.findFirstByProduct(product);
-    ProductLikeDto productLikeDto = new ProductLikeDto(product.getName(), product.getStartDateTime(), product.getMaxEndDateTime(), product.getPrice(),
-        productImage.getUrl());
+    ProductLikeDto productLikeDto = new ProductLikeDto(product.getName(),
+        product.getStartDateTime(), product.getMaxEndDateTime(), product.getPrice(),
+        productImage.getUrl(), product.getStatus());
     boolean likeButton = requestDto.isPress();
     Like like = null;
     boolean existingLike = likeRepository.existsByMemberAndProduct(member, product);
@@ -124,7 +125,6 @@ public class LikeService {
         countLike(product);
         likeCountRankingRepository.setZSetValue("ranking", productLikeDto,
             product.getLikeCount());
-
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
       }
@@ -154,8 +154,13 @@ public class LikeService {
           .map(tuple -> {
             Object value = tuple.getValue();
             ProductLikeDto dto = convertMapToDto((Map<String, Object>) value); // Convert Map to DTO
-            return new ProductLikeWithScore(dto, tuple.getScore());
+            if ("UPCOMING".equals(dto.getStatus().toString())) {
+              return new ProductLikeWithScore(dto, tuple.getScore());
+            } else {
+              return null;
+            }
           })
+          .filter(dtoWithScore -> dtoWithScore != null)
           .collect(Collectors.toList());
     }
 
