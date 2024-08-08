@@ -4,7 +4,6 @@ import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.member.util.JwtUtil;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,44 +26,50 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
   private final MemberDetailsServiceImpl memberDetailsService;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   @Override
   protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
       FilterChain filterChain) throws ServletException, IOException {
 
     String tokenValue = jwtUtil.getJwtFromHeader(req);
-    // 토큰이 존재하고 Refresh Token이 아닌 경우에만 처리
-    if (StringUtils.hasText(tokenValue)&& !isRefreshToken(tokenValue)) {
 
-      if (!jwtUtil.validateToken(tokenValue)) {
-        log.error("Token Error");
-        return;
-      }
-
-      Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
-
+    if (StringUtils.hasText(tokenValue)) {
       try {
-        setAuthentication(info.getSubject());
-      } catch (Exception e) {
-        log.error(e.getMessage());
+        // 1. 토큰 유효성 검사
+        jwtUtil.validateToken(tokenValue);
+
+        // 2. Refresh Token인지 확인
+        if (isRefreshToken(tokenValue)) {
+          throw CustomException.from(ExceptionCode.NOT_AN_ACCESS_TOKEN);
+        } else {
+          // 액세스 토큰인 경우, 사용자 정보 추출 및 인증 설정
+          Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
+          try {
+            setAuthentication(info.getSubject());
+          } catch (Exception e) {
+            log.error( e.getMessage());
+            throw CustomException.from(ExceptionCode.INVALID_TOKEN);
+          }
+        }
+      } catch (CustomException e) {
+        // 예외 발생 시, jwtAuthenticationEntryPoint를 사용하여 응답 처리
+        jwtAuthenticationEntryPoint.commence(req, res,
+            new AuthenticationException(e.getMessage()) {});
         return;
       }
     }
 
+    // 필터 체인 진행
     filterChain.doFilter(req, res);
   }
 
   private boolean isRefreshToken(String token) {
-    try {
-      // getUserInfoFromToken 메서드를 사용하여 클레임 추출
-      Claims claims = jwtUtil.getUserInfoFromToken(token);
-      // 'token_type' 클레임이 'refresh'인지 확인
-      String tokenType = (String) claims.get("token_type");
-      return "refresh".equals(tokenType);
-
-    } catch (JwtException e) {
-      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
-    }
+    // getUserInfoFromToken 메서드를 사용하여 클레임 추출
+    Claims claims = jwtUtil.getUserInfoFromToken(token);
+    // 'token_type' 클레임이 'refresh'인지 확인
+    String tokenType = (String) claims.get("token_type");
+    return "refresh".equals(tokenType);
   }
 
   // 인증 처리

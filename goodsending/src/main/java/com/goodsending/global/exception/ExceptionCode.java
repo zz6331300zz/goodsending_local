@@ -42,6 +42,10 @@ public enum ExceptionCode {
   INVALID_TOKEN(UNAUTHORIZED, "토큰이 유효하지 않습니다."),
   STORED_TOKEN_HAS_EXPIRED(UNAUTHORIZED, "저장된 토큰이 만료되었습니다."),
   TOKEN_MISMATCH(UNAUTHORIZED, "토큰이 일지하지 않습니다."),
+  INVALID_SIGNATURE(UNAUTHORIZED, "유효하지 않는 JWT 서명입니다."),
+  EXPIRED_JWT_TOKEN(UNAUTHORIZED, "만료된 JWT token 입니다."),
+  UNSUPPORTED_TOKEN(UNAUTHORIZED, "지원되지 않는 JWT 토큰입니다."),
+  JWT_CLAIMS_ARE_EMPTY(UNAUTHORIZED, "잘못된 JWT 토큰입니다."),
 
   // FORBIDDEN:403:권한이슈
   RECEIVER_ID_MISMATCH(FORBIDDEN, "수신자만이 수신 정보를 변경할 수 있습니다."),
@@ -72,7 +76,8 @@ public enum ExceptionCode {
   LOW_DISK_SPACE(INTERNAL_SERVER_ERROR, "디스크 공간이 부족합니다."),
   FILE_UPLOAD_FAILED(INTERNAL_SERVER_ERROR, "파일 변환에 실패했습니다."),
   ALGORITHM_NOT_AVAILABLE(INTERNAL_SERVER_ERROR, "알고리즘을 찾을 수 없습니다."),
-  EMAIL_SENDING_FAILED(INTERNAL_SERVER_ERROR, "이메일 전송에 실패했습니다.");
+  EMAIL_SENDING_FAILED(INTERNAL_SERVER_ERROR, "이메일 전송에 실패했습니다."),
+  NOT_AN_ACCESS_TOKEN(INTERNAL_SERVER_ERROR, "Refresh Token은 사용할 수 없습니다.");
 
   private final HttpStatus status;
   private final String message;

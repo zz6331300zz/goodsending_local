@@ -1,18 +1,25 @@
 package com.goodsending.member.util;
 
+import com.goodsending.global.exception.CustomException;
+import com.goodsending.global.exception.ExceptionCode;
 import com.goodsending.member.type.MemberRole;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import java.security.Key;
+import java.util.Base64;
+import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
 
 @Slf4j(topic = "JwtUtil")
 @Component
@@ -90,14 +97,17 @@ public class JwtUtil {
       return true;
     } catch (SecurityException | MalformedJwtException | SignatureException e) {
       log.error("Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
+      throw CustomException.from(ExceptionCode.INVALID_SIGNATURE);
     } catch (ExpiredJwtException e) {
       log.error("Expired JWT token, 만료된 JWT token 입니다.");
+      throw CustomException.from(ExceptionCode.EXPIRED_JWT_TOKEN);
     } catch (UnsupportedJwtException e) {
       log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
+      throw CustomException.from(ExceptionCode.UNSUPPORTED_TOKEN);
     } catch (IllegalArgumentException e) {
       log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
+      throw CustomException.from(ExceptionCode.JWT_CLAIMS_ARE_EMPTY);
     }
-    return false;
   }
 
   // 토큰에서 사용자 정보 가져오기
