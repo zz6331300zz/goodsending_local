@@ -1,5 +1,6 @@
 package com.goodsending.product.service;
 
+import com.goodsending.bid.repository.ProductBidPriceMaxRepository;
 import com.goodsending.deposit.entity.Deposit;
 import com.goodsending.deposit.repository.DepositRepository;
 import com.goodsending.deposit.type.DepositStatus;
@@ -9,8 +10,8 @@ import com.goodsending.global.service.S3Uploader;
 import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
+import com.goodsending.product.dto.request.ProductSearchCondition;
 import com.goodsending.product.dto.request.ProductUpdateRequestDto;
-import com.goodsending.product.dto.response.MyProductSummaryDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductImageCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
@@ -20,6 +21,8 @@ import com.goodsending.product.entity.Product;
 import com.goodsending.product.entity.ProductImage;
 import com.goodsending.product.repository.ProductImageRepository;
 import com.goodsending.product.repository.ProductRepository;
+import com.goodsending.product.type.ProductStatus;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
   private final S3Uploader s3Uploader;
   private final MemberRepository memberRepository;
   private final DepositRepository depositRepository;
+  private final ProductBidPriceMaxRepository productBidPriceMaxRepository;
 
   /**
    * 상품 등록
@@ -118,29 +122,23 @@ public class ProductServiceImpl implements ProductService {
 
     Product product = findProduct(productId);
     List<ProductImage> productImageList = findProductImageList(product);
+    Duration remainingExpiration = productBidPriceMaxRepository.getRemainingExpiration(productId);
 
-    return ProductInfoDto.of(product, productImageList);
+    return ProductInfoDto.of(product, productImageList, remainingExpiration);
   }
 
   /**
    * 경매 상품 목록 조회
-   *
-   * @param now                 현재 시각
-   * @param openProduct         구매 가능한 매물 선택 여부
-   * @param closedProduct       마감된 매물 선택 여부
-   * @param keyword             검색어
-   * @param cursorStartDateTime
-   * @param cursorId            사용자에게 응답해준 마지막 데이터의 식별자값
-   * @param size                조회할 데이터 개수
-   * @return 조회한 경매 상품 목록 반환
+   * @param productSearchCondition 경매 상품 목록 조회 조건
+   * @return 조회한 경매 상품 목록
    * @author : puclpu
    */
   @Override
   @Transactional(readOnly = true)
-  public Slice<ProductSummaryDto> getProductSlice(LocalDateTime now, String openProduct,
-      String closedProduct, String keyword, LocalDateTime cursorStartDateTime, Long cursorId, int size) {
+  public Slice<ProductSummaryDto> getProductSlice(ProductSearchCondition productSearchCondition) {
+    int size = productSearchCondition.getSize();
     Pageable pageable = PageRequest.of(0, size);
-    Slice<ProductSummaryDto> productSummaryDtoSlice = productRepository.findByFiltersAndSort(now, openProduct, closedProduct, keyword, cursorStartDateTime, cursorId, pageable);
+    Slice<ProductSummaryDto> productSummaryDtoSlice = productRepository.findByFiltersAndSort(productSearchCondition, pageable);
     return productSummaryDtoSlice;
   }
 
@@ -249,20 +247,20 @@ public class ProductServiceImpl implements ProductService {
     productRepository.delete(product);
   }
 
-  /**
-   * 내가 판매 중인 경매 상품 목록 조회
-   * @param memberId 사용자 아이디
-   * @param size 조회할 상품 개수
-   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
-   * @return 등록한 경매 상품 목록
-   * @author : puclpu
-   */
   @Override
-  @Transactional(readOnly = true)
-  public Slice<MyProductSummaryDto> getMyProductSlice(Long memberId, int size, Long cursorId) {
-    Pageable pageable = PageRequest.of(0, size);
-    Slice<MyProductSummaryDto> myProductSummaryDtoList = productRepository.findProductByMember(memberId, pageable, cursorId);
-    return myProductSummaryDtoList;
+  @Transactional
+  public void updateProductStatus(ProductStatus status, LocalDateTime startDateTime) {
+//    LocalDateTime startDateTime = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
+    List<Product> products = productRepository.findAllByStatusAndStartDateTime(status, startDateTime);
+    for (Product product : products) {
+      switch (status) {
+        case UPCOMING:
+          product.setStatus(ProductStatus.ONGOING);
+          break;
+        case ONGOING:
+          product.setStatus(ProductStatus.ENDED);
+      }
+    }
   }
 
   private List<ProductImage> findProductImageList(Product product) {

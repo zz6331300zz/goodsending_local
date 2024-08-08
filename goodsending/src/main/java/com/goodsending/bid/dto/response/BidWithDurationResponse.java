@@ -24,6 +24,8 @@ public record BidWithDurationResponse(
 
     Integer biddingCount,
 
+    Integer bidderCount,
+
     Duration remainDuration
 ) {
 
@@ -35,6 +37,7 @@ public record BidWithDurationResponse(
         .memberId(bid.memberId())
         .productId(bid.productId())
         .biddingCount(bid.biddingCount())
+        .bidderCount(bid.bidderCount())
         .remainDuration(remainDuration)
         .build();
   }

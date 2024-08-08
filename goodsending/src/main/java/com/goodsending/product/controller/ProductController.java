@@ -2,8 +2,8 @@ package com.goodsending.product.controller;
 
 import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
+import com.goodsending.product.dto.request.ProductSearchCondition;
 import com.goodsending.product.dto.request.ProductUpdateRequestDto;
-import com.goodsending.product.dto.response.MyProductSummaryDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/products")
 @RequiredArgsConstructor
 @Slf4j
 public class ProductController {
@@ -50,7 +50,7 @@ public class ProductController {
    * @author : puclpu
    */
   @Operation(summary = "경매 상품 등록 기능", description = "상품명, 판매가, 상품소개, 경매시작일, 경매시간대, 상품 이미지를 입력하면 상품을 등록할 수 있다.")
-  @PostMapping("/products")
+  @PostMapping
   public ResponseEntity<ProductCreateResponseDto> createProduct(
       @RequestPart("requestDto") @Valid ProductCreateRequestDto requestDto,
       @RequestPart("productImages") List<MultipartFile> productImages,
@@ -68,7 +68,7 @@ public class ProductController {
    * @author : puclpu
    */
   @Operation(summary = "경매 상품 상세 정보 조회 기능", description = "상품 아이디를 통해 선택한 상품의 상세 정보를 조회할 수 있다.")
-  @GetMapping("/products/{productId}")
+  @GetMapping("/{productId}")
   public ResponseEntity<ProductInfoDto> getProduct(@PathVariable Long productId) {
     ProductInfoDto responseDto = productService.getProduct(productId);
     return ResponseEntity.status(HttpStatus.OK).body(responseDto);
@@ -76,27 +76,17 @@ public class ProductController {
 
   /**
    * 경매 상품 목록 조회
-   * @param openProduct 구매 가능한 매물 선택 여부
-   * @param closedProduct 마감된 매물 선택 여부
-   * @param keyword 검색어
-   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
-   * @param size 조회할 데이터 개수
-   * @return 조회한 경매 상품 목록 반환
+   * @param productSearchCondition 경매 상품 목록 조회 조건
+   * @return 조회한 경매 상품 목록
    * @author : puclpu
    */
   @Operation(summary = "경매 상품 검색 기능",
-      description = "필터링 조건(구매 가능한 매물, 마감된 매물, 검색어)에 맞춰 검색을 진행하고 조회된 상품 목록을 반환한다."
-          + "구매 가능한 매물과 마감된 매물 순으로 정렬하되 시작 시간이 빠른 순으로 정렬한다.")
-  @GetMapping("/products")
-  public ResponseEntity<Slice<ProductSummaryDto>> getProductSlice(
-                                    @RequestParam(required = false) String openProduct,
-                                    @RequestParam(required = false) String closedProduct,
-                                    @RequestParam(required = false) String keyword,
-                                    @RequestParam(required = false) LocalDateTime cursorStartDateTime,
-                                    @RequestParam(required = false) Long cursorId,
-                                    @RequestParam(required = true, defaultValue = "15") int size) {
-    LocalDateTime now = LocalDateTime.now();
-    Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(now, openProduct, closedProduct, keyword, cursorStartDateTime, cursorId, size);
+      description = "전체 조회일 경우 조건없이, "
+          + "내가 등록한 상품 목록 조회 시 memberId를, "
+          + "필터링 검색의 경우 openProduct, closedProduct, keyword 를 조건으로 상품 목록을 조회한다.")
+  @GetMapping
+  public ResponseEntity<Slice<ProductSummaryDto>> getProductSlice(@RequestBody ProductSearchCondition productSearchCondition) {
+    Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(productSearchCondition);
     return ResponseEntity.status(HttpStatus.OK).body(productSummaryDtoSlice);
   }
 
@@ -108,7 +98,8 @@ public class ProductController {
    * @param memberId 등록자
    * @return 수정된 상품 정보
    */
-  @PutMapping("/products/{productId}")
+  @Operation(summary = "경매 상품 수정 기능", description = "상품 아이디를 통해 상품명, 상품 소개, 경매시작일, 경매 시간대를 수정할 수 있습니다.")
+  @PutMapping("/{productId}")
   public ResponseEntity<ProductUpdateResponseDto> updateProduct (@PathVariable Long productId,
                                     @RequestPart("requestDto") @Valid ProductUpdateRequestDto requestDto,
                                     @RequestPart("productImages") List<MultipartFile> productImages,
@@ -124,27 +115,11 @@ public class ProductController {
    * @param memberId 등록자
    * @return 경매 상품 삭제 성공 여부
    */
-  @DeleteMapping("/products/{productId}")
+  @Operation(summary = "경매 상품 삭제", description = "상품 아이디와 회원 아이디로 상품을 삭제할 수 있습니다.")
+  @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(@PathVariable Long productId, @MemberId(required = true) Long memberId) {
     LocalDateTime now = LocalDateTime.now();
     productService.deleteProduct(productId, memberId, now);
     return ResponseEntity.status(HttpStatus.OK).build();
-  }
-
-  /**
-   * 내가 판매 중인 경매 상품 목록 조회
-   * @param memberId 사용자 아이디
-   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
-   * @param size 조회할 데이터 개수
-   * @return 등록한 경매 상품 목록
-   * @author : puclpu
-   */
-  @GetMapping("/members/products")
-  public ResponseEntity<Slice<MyProductSummaryDto>> getMyProductList(
-                                    @MemberId(required = true) Long memberId,
-                                    @RequestParam(required = false) Long cursorId,
-                                    @RequestParam(required = false, defaultValue = "15") int size) {
-    Slice<MyProductSummaryDto> productSummaryDtoList = productService.getMyProductSlice(memberId, size, cursorId);
-    return ResponseEntity.status(HttpStatus.OK).body(productSummaryDtoList);
   }
 }

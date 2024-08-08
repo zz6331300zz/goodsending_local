@@ -5,8 +5,11 @@ import com.goodsending.member.entity.Member;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
 import com.goodsending.product.dto.request.ProductUpdateRequestDto;
 import com.goodsending.product.type.AuctionTime;
+import com.goodsending.product.type.ProductStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -59,6 +62,9 @@ public class Product extends BaseEntity {
   @Column(name = "bidding_count", nullable = false)
   private int biddingCount;
 
+  @Column(name = "bidder_count", nullable = false)
+  private int bidderCount;
+
   @Column(name = "like_count", nullable = true)
   private Long likeCount;
 
@@ -71,6 +77,11 @@ public class Product extends BaseEntity {
 
   @Column(name = "deleted_date_time", nullable = true)
   private LocalDateTime deletedDateTime;
+
+  @Column(name = "status", nullable = false)
+  @Enumerated(value = EnumType.STRING)
+  @Setter
+  private ProductStatus status = ProductStatus.UPCOMING;
 
   @Builder
   public Product(Long id, String name, int price, String introduction, LocalDateTime startDateTime,
@@ -133,5 +144,13 @@ public class Product extends BaseEntity {
       return;
     }
     this.biddingCount = (int)biddingCount.longValue();
+  }
+
+  public void setBidderCount(Long bidderCount) {
+    if(bidderCount == null) {
+      this.bidderCount = 0;
+      return;
+    }
+    this.bidderCount = (int)bidderCount.longValue();
   }
 }

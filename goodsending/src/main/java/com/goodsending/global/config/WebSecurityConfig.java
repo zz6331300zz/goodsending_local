@@ -4,6 +4,7 @@ import com.goodsending.global.security.JwtAuthenticationEntryPoint;
 import com.goodsending.global.security.JwtAuthenticationFilter;
 import com.goodsending.global.security.JwtAuthorizationFilter;
 import com.goodsending.global.security.MemberDetailsServiceImpl;
+import com.goodsending.member.repository.BlackListAccessTokenRepository;
 import com.goodsending.member.repository.SaveRefreshTokenRepository;
 import com.goodsending.member.util.JwtUtil;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,6 +38,7 @@ public class WebSecurityConfig {
   private final AuthenticationConfiguration authenticationConfiguration;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final SaveRefreshTokenRepository saveRefreshTokenRepository;
+  private final BlackListAccessTokenRepository blackListAccessTokenRepository;
 
   @Value("${front.list}")
   private List<String> frontUrls;
@@ -61,7 +64,7 @@ public class WebSecurityConfig {
 
   @Bean
   public JwtAuthorizationFilter jwtAuthorizationFilter() {
-    return new JwtAuthorizationFilter(jwtUtil, memberDetailsService);
+    return new JwtAuthorizationFilter(jwtUtil, memberDetailsService, jwtAuthenticationEntryPoint, blackListAccessTokenRepository);
   }
 
   @Bean
@@ -83,7 +86,8 @@ public class WebSecurityConfig {
             .permitAll() // resources 접근 허용 설정
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/check").permitAll()
             .requestMatchers("/ws", "/api/members/sendMail", "/api/members/signup",
-                "/api/members/login", "/api/members/checkCode").permitAll()
+                "/api/members/login", "/api/members/checkCode", "/api/members/tokenReissue").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/product-message-histories").permitAll()
             //.requestMatchers("/").permitAll()
             .anyRequest().authenticated() // 그 외 모든 요청 인증처리
     );

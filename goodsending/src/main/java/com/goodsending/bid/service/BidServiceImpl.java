@@ -13,8 +13,11 @@ import com.goodsending.member.entity.Member;
 import com.goodsending.member.repository.MemberRepository;
 import com.goodsending.product.entity.Product;
 import com.goodsending.product.repository.ProductRepository;
+import com.goodsending.productmessage.event.CreateProductMessageEvent;
+import com.goodsending.productmessage.type.MessageType;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,7 @@ public class BidServiceImpl implements BidService {
   private final ProductRepository productRepository;
   private final MemberRepository memberRepository;
   private final ProductBidPriceMaxRepository productBidPriceMaxRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 입찰 신청
@@ -63,8 +67,16 @@ public class BidServiceImpl implements BidService {
     // 입찰 내역이 생성된다.
     Bid save = bidRepository.save(Bid.of(member, product, request));
 
+    // 입찰수 변경
+    product.setBiddingCount(bidRepository.countByProduct(product.getId()));
     // 입찰자 수 변경
-    product.setBiddingCount(bidRepository.countByProduct(product));
+    product.setBidderCount(bidRepository.countDistinctMembersByProduct(product.getId()));
+
+    // 입찰 메시지 이벤트 발행
+    eventPublisher.publishEvent(CreateProductMessageEvent.of(
+        memberId, request.productId(),
+        MessageType.BID,
+        request.bidPrice()));
 
     return BidResponse.from(save);
   }
