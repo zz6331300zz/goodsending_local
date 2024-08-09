@@ -77,6 +77,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     response.addHeader(JwtUtil.AUTHORIZATION_HEADER, token);
     // Refresh Token을 HttpOnly 쿠키에 설정
     addCookie(response, refresh, frontDomain);
+    addCookie(response, refresh, "localhost");
 
     // redis 저장
     saveRefreshTokenRepository.setValue(email, refresh, REFRESH_TOKEN_EXPIRE);
@@ -98,7 +99,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       String domain) {
     Cookie cookie = new Cookie("refresh_token", value);
     cookie.setHttpOnly(true);  // 자바스크립트에서 접근 불가
-    cookie.setSecure(true);    // HTTPS를 통해서만 전송
+    cookie.setSecure(!"localhost".equals(domain));    // HTTPS를 통해서만 전송
     cookie.setPath("/");       // 쿠키의 유효 범위 설정
     cookie.setDomain(domain);  // 도메인 설정
     cookie.setMaxAge(1209600); // 만료 시간 설정 (14일 초 단위)
