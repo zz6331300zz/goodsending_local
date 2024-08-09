@@ -1,7 +1,7 @@
 package com.goodsending.productmessage.repository;
 
-import com.goodsending.productmessage.dto.ProductMessageListRequest;
-import com.goodsending.productmessage.dto.ProductMessageResponse;
+import com.goodsending.productmessage.dto.request.ProductMessageListRequest;
+import com.goodsending.productmessage.dto.response.ProductMessageResponse;
 import org.springframework.data.domain.Slice;
 
 /**

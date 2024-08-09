@@ -18,12 +18,14 @@ public enum MessageType {
   AUCTION_WINNER("경매 낙찰자 탄생 메시지",
              """
              %s님이 %d원에 낙찰되었습니다.
-             """.stripIndent());
+             """.stripIndent()),
+  GENERAL_CHAT("일반 채팅","없음"),
+  ANNOUNCEMENT("공지","없음")
+  ;
 
   private final String name;
 
   @Getter
   private final String pattern;
-
 
 }

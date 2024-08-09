@@ -31,4 +31,15 @@ public record ProductMessageDto(
         .type(history.getType())
         .build();
   }
+
+  public static ProductMessageDto of(ProductMessageHistory history){
+    return ProductMessageDto.builder()
+        .memberId(history.getMember().getMemberId())
+        .productId(history.getProduct().getId())
+        .message(history.getMessage())
+        .biddingCount(history.getProduct().getBiddingCount())
+        .bidderCount(history.getProduct().getBidderCount())
+        .type(history.getType())
+        .build();
+  }
 }

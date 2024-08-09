@@ -1,7 +1,7 @@
 package com.goodsending.productmessage.controller;
 
-import com.goodsending.productmessage.dto.ProductMessageListRequest;
-import com.goodsending.productmessage.dto.ProductMessageResponse;
+import com.goodsending.productmessage.dto.request.ProductMessageListRequest;
+import com.goodsending.productmessage.dto.response.ProductMessageResponse;
 import com.goodsending.productmessage.service.ProductMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
