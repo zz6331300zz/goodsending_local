@@ -124,7 +124,7 @@ public class WebSecurityConfig {
     configuration.setAllowedHeaders(Collections.singletonList("*"));
     configuration.setAllowedMethods(Collections.singletonList("*"));
     configuration.setMaxAge(600L); // 10분
-    configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+    configuration.setExposedHeaders(Collections.singletonList(JwtUtil.AUTHORIZATION_HEADER));
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
