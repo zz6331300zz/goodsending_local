@@ -1,12 +1,14 @@
-package com.goodsending.productlike.entity;
+package com.goodsending.productlike.dto;
 
 import com.goodsending.product.type.ProductStatus;
+import com.querydsl.core.annotations.QueryProjection;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Getter
-public class ProductLikeDto {
+public class ProductRankingDto {
 
+  private Long productId;
   private String productName;
   private LocalDateTime startDateTime;
   private LocalDateTime maxEndDateTime;
@@ -14,8 +16,10 @@ public class ProductLikeDto {
   private String url;
   private ProductStatus status;
 
-  public ProductLikeDto(String productName, LocalDateTime startDateTime,
+  @QueryProjection
+  public ProductRankingDto(Long productId, String productName, LocalDateTime startDateTime,
       LocalDateTime maxEndDateTime, int price, String url, ProductStatus status) {
+    this.productId = productId;
     this.productName = productName;
     this.startDateTime = startDateTime;
     this.maxEndDateTime = maxEndDateTime;
