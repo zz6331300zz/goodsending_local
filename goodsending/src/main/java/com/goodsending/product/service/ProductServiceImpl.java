@@ -129,14 +129,23 @@ public class ProductServiceImpl implements ProductService {
 
   /**
    * 경매 상품 목록 조회
-   * @param productSearchCondition 경매 상품 목록 조회 조건
+   * @param memberId 상품 등록 회원 아이디
+   * @param openProduct 구매 가능한 매물 선택 여부
+   * @param closedProduct 마감 된 매물 선택 여부
+   * @param keyword 검색어
+   * @param cursorStatus 사용자에게 응답해준 마지막 데이터의 상태
+   * @param cursorStartDateTime 사용자에게 응답해준 마지막 데이터의 경매 시작 시각
+   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
+   * @param size 조회할 데이터 개수
    * @return 조회한 경매 상품 목록
    * @author : puclpu
    */
   @Override
   @Transactional(readOnly = true)
-  public Slice<ProductSummaryDto> getProductSlice(ProductSearchCondition productSearchCondition) {
-    int size = productSearchCondition.getSize();
+  public Slice<ProductSummaryDto> getProductSlice(
+          Long memberId, boolean openProduct, boolean closedProduct, String keyword,
+          ProductStatus cursorStatus, LocalDateTime cursorStartDateTime, Long cursorId, int size) {
+    ProductSearchCondition productSearchCondition = ProductSearchCondition.of(memberId, openProduct, closedProduct, keyword, cursorStatus, cursorStartDateTime, cursorId);
     Pageable pageable = PageRequest.of(0, size);
     Slice<ProductSummaryDto> productSummaryDtoSlice = productRepository.findByFiltersAndSort(productSearchCondition, pageable);
     return productSummaryDtoSlice;

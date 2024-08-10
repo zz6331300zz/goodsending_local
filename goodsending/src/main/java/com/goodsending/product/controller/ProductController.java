@@ -2,13 +2,13 @@ package com.goodsending.product.controller;
 
 import com.goodsending.global.security.anotation.MemberId;
 import com.goodsending.product.dto.request.ProductCreateRequestDto;
-import com.goodsending.product.dto.request.ProductSearchCondition;
 import com.goodsending.product.dto.request.ProductUpdateRequestDto;
 import com.goodsending.product.dto.response.ProductCreateResponseDto;
 import com.goodsending.product.dto.response.ProductInfoDto;
 import com.goodsending.product.dto.response.ProductSummaryDto;
 import com.goodsending.product.dto.response.ProductUpdateResponseDto;
 import com.goodsending.product.service.ProductService;
+import com.goodsending.product.type.ProductStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
@@ -76,7 +76,14 @@ public class ProductController {
 
   /**
    * 경매 상품 목록 조회
-   * @param productSearchCondition 경매 상품 목록 조회 조건
+   * @param memberId 상품 등록 회원 아이디
+   * @param openProduct 구매 가능한 매물 선택 여부
+   * @param closedProduct 마감 된 매물 선택 여부
+   * @param keyword 검색어
+   * @param cursorStatus 사용자에게 응답해준 마지막 데이터의 상태
+   * @param cursorStartDateTime 사용자에게 응답해준 마지막 데이터의 경매 시작 시각
+   * @param cursorId 사용자에게 응답해준 마지막 데이터의 식별자값
+   * @param size 조회할 데이터 개수
    * @return 조회한 경매 상품 목록
    * @author : puclpu
    */
@@ -85,8 +92,18 @@ public class ProductController {
           + "내가 등록한 상품 목록 조회 시 memberId를, "
           + "필터링 검색의 경우 openProduct, closedProduct, keyword 를 조건으로 상품 목록을 조회한다.")
   @GetMapping
-  public ResponseEntity<Slice<ProductSummaryDto>> getProductSlice(@RequestBody ProductSearchCondition productSearchCondition) {
-    Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(productSearchCondition);
+  public ResponseEntity<Slice<ProductSummaryDto>> getProductSlice(
+      @RequestParam(required = false) Long memberId,
+      @RequestParam(required = false) boolean openProduct,
+      @RequestParam(required = false) boolean closedProduct,
+      @RequestParam(required = false) String keyword,
+      @RequestParam(required = false) ProductStatus cursorStatus,
+      @RequestParam(required = false) LocalDateTime cursorStartDateTime,
+      @RequestParam(required = false) Long cursorId,
+      @RequestParam(required = true, defaultValue = "15") int size) {
+    Slice<ProductSummaryDto> productSummaryDtoSlice = productService.getProductSlice(
+                                            memberId, openProduct, closedProduct, keyword,
+                                            cursorStatus, cursorStartDateTime, cursorId, size);
     return ResponseEntity.status(HttpStatus.OK).body(productSummaryDtoSlice);
   }
 
