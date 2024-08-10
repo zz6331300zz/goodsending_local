@@ -1,4 +1,4 @@
-package com.goodsending.productmessage.dto;
+package com.goodsending.productmessage.dto.response;
 
 import com.goodsending.productmessage.type.MessageType;
 import com.querydsl.core.annotations.QueryProjection;

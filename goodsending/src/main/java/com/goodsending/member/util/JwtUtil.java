@@ -26,7 +26,7 @@ import org.springframework.util.StringUtils;
 public class JwtUtil {
 
   // Header KEY 값
-  public static final String AUTHORIZATION_HEADER = "Authorization";
+  public static final String AUTHORIZATION_HEADER = "Access_Token";
   // Refresh 토큰 이름
   public static final String REFRESH_TOKEN_NAME = "Refresh_Token";
   // 사용자 권한 값의 KEY
@@ -59,7 +59,7 @@ public class JwtUtil {
   public String createToken(Long memberId, String email, MemberRole role) {
     Date date = new Date();
 
-    return BEARER_PREFIX +
+    return
         Jwts.builder()
             .setSubject(email) // 사용자 식별자값(ID)
             .claim(MEMBER_ID_KEY, memberId) // 사용자 ID 추가

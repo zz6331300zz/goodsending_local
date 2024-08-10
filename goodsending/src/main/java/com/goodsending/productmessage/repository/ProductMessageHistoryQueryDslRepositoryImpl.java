@@ -4,9 +4,9 @@ import static com.goodsending.member.entity.QMember.member;
 import static com.goodsending.product.entity.QProduct.product;
 import static com.goodsending.productmessage.entity.QProductMessageHistory.productMessageHistory;
 
-import com.goodsending.productmessage.dto.ProductMessageListRequest;
-import com.goodsending.productmessage.dto.ProductMessageResponse;
-import com.goodsending.productmessage.dto.QProductMessageResponse;
+import com.goodsending.productmessage.dto.request.ProductMessageListRequest;
+import com.goodsending.productmessage.dto.response.ProductMessageResponse;
+import com.goodsending.productmessage.dto.response.QProductMessageResponse;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;

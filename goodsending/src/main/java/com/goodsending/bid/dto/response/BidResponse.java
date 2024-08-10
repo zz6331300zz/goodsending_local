@@ -36,7 +36,7 @@ public record BidResponse(
         .memberId(bid.getMember().getMemberId())
         .productId(bid.getProduct().getId())
         .biddingCount(bid.getProduct().getBiddingCount())
-        .bidderCount(builder().bidderCount)
+        .bidderCount(bid.getProduct().getBidderCount())
         .build();
   }
 }

@@ -1,4 +1,4 @@
-package com.goodsending.productmessage.dto;
+package com.goodsending.productmessage.dto.request;
 
 /**
  * @Date : 2024. 08. 08.
