@@ -2,6 +2,7 @@ package com.goodsending.product.scheduler;
 
 import com.goodsending.product.service.ProductService;
 import com.goodsending.product.type.ProductStatus;
+import com.goodsending.productlike.service.LikeService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,12 +15,15 @@ import org.springframework.stereotype.Component;
 public class ProductScheduler {
 
   private final ProductService productService;
+  private final LikeService likeService;
 
   @Scheduled(cron = "0 0 12,18 * * *") // 매일 12시, 18시
   public void updateUpComingProduct() {
     log.info("경매 진행 상태 전환 ");
     LocalDateTime startDateTime = LocalDateTime.now().withHour(12).withMinute(0).withSecond(0).withNano(0);
     productService.updateProductStatus(ProductStatus.UPCOMING, startDateTime);
+    likeService.deleteTop5Likes();
+
   }
 
   @Scheduled(cron = "59 59 14,20 * * *") // 매일 14시, 20시 59분 59초

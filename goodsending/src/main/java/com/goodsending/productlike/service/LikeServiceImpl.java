@@ -13,7 +13,7 @@ import com.goodsending.product.repository.ProductRepository;
 import com.goodsending.productlike.dto.LikeRequestDto;
 import com.goodsending.productlike.dto.LikeResponseDto;
 import com.goodsending.productlike.entity.Like;
-import com.goodsending.productlike.entity.ProductLikeDto;
+import com.goodsending.productlike.dto.ProductRankingDto;
 import com.goodsending.productlike.entity.ProductLikeWithScore;
 import com.goodsending.productlike.repository.LikeCountRankingRepository;
 import com.goodsending.productlike.repository.LikeRepository;
@@ -161,7 +161,7 @@ public class LikeServiceImpl implements LikeService {
     Member member = findMemberById(memberId);
     Product product = findProductById(requestDto.getProductId());
     ProductImage productImage = productImageRepository.findFirstByProduct(product);
-    ProductLikeDto productLikeDto = new ProductLikeDto(product.getName(),
+    ProductRankingDto productRankingDto = new ProductRankingDto(product.getId(), product.getName(),
         product.getStartDateTime(), product.getMaxEndDateTime(), product.getPrice(),
         productImage.getUrl(), product.getStatus());
     boolean likeButton = requestDto.isPress();
@@ -173,23 +173,26 @@ public class LikeServiceImpl implements LikeService {
         like = new Like(product, member);
         likeRepository.save(like);
         countLike(product);
-        likeCountRankingRepository.setZSetValue("ranking", productLikeDto,
+        likeCountRankingRepository.setZSetValue("ranking", productRankingDto,
             product.getLikeCount());
-
+      }
+      else{
+        likeCountRankingRepository.setZSetValue("ranking", productRankingDto,
+            product.getLikeCount());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).build();
       }
-    } else {
+    else {
       like = likeRepository.findLikeByMemberAndProduct(member,
           product).orElseThrow(() -> CustomException.from(ExceptionCode.MEMBER_NOT_FOUND));
       likeRepository.delete(like);
       countLike(product);
 
-      likeCountRankingRepository.setZSetValue("ranking", productLikeDto,
+      likeCountRankingRepository.setZSetValue("ranking", productRankingDto,
           product.getLikeCount());
 
       return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
   }
 
   /**
@@ -202,7 +205,7 @@ public class LikeServiceImpl implements LikeService {
    */
 
   public List<ProductLikeWithScore> readTop5LikeProduct() {
-    Set<TypedTuple<ProductLikeDto>> allProducts = likeCountRankingRepository.getZSetTupleByKey(
+    Set<TypedTuple<ProductRankingDto>> allProducts = likeCountRankingRepository.getZSetTupleByKey(
         "ranking", 0, -1);
 
     if (allProducts != null) {
@@ -212,7 +215,7 @@ public class LikeServiceImpl implements LikeService {
           .limit(5)
           .map(tuple -> {
             Object value = tuple.getValue();
-            ProductLikeDto dto = convertMapToDto((Map<String, Object>) value); // Convert Map to DTO
+            ProductRankingDto dto = convertMapToDto((Map<String, Object>) value); // Convert Map to DTO
             if ("UPCOMING".equals(dto.getStatus().toString())) {
               return new ProductLikeWithScore(dto, tuple.getScore());
             } else {
@@ -227,16 +230,16 @@ public class LikeServiceImpl implements LikeService {
 
   }
 
-  public ProductLikeDto convertMapToDto(Map<String, Object> map) {
+  public ProductRankingDto convertMapToDto(Map<String, Object> map) {
     try {
-      return objectMapper.convertValue(map, ProductLikeDto.class);
+      return objectMapper.convertValue(map, ProductRankingDto.class);
     } catch (IllegalArgumentException e) {
       throw new RuntimeException("Error converting map to ProductLikeDto", e);
     }
   }
 
-
-  public void deleteLikeRankingInfo() {
-    likeCountRankingRepository.deleteZSetValue("product_start_date_time");
+  @Override
+  public void deleteTop5Likes() {
+    likeCountRankingRepository.deleteZSetValue("ranking");
   }
 }

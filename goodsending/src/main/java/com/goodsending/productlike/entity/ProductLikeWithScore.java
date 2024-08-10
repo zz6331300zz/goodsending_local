@@ -1,20 +1,22 @@
 package com.goodsending.productlike.entity;
 
+import com.goodsending.productlike.dto.ProductRankingDto;
+
 public class ProductLikeWithScore {
-  private ProductLikeDto productLikeDto;
+  private ProductRankingDto productRankingDto;
   private Double score;
 
-  public ProductLikeWithScore(ProductLikeDto productLikeDto, Double score) {
-    this.productLikeDto = productLikeDto;
+  public ProductLikeWithScore(ProductRankingDto productRankingDto, Double score) {
+    this.productRankingDto = productRankingDto;
     this.score = score;
   }
 
-  public ProductLikeDto getProductLikeDto() {
-    return productLikeDto;
+  public ProductRankingDto getProductLikeDto() {
+    return productRankingDto;
   }
 
-  public void setProductLikeDto(ProductLikeDto productLikeDto) {
-    this.productLikeDto = productLikeDto;
+  public void setProductLikeDto(ProductRankingDto productRankingDto) {
+    this.productRankingDto = productRankingDto;
   }
 
   public Double getScore() {

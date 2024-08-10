@@ -2,7 +2,7 @@ package com.goodsending.global.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.goodsending.productlike.entity.ProductLikeDto;
+import com.goodsending.productlike.dto.ProductRankingDto;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -85,8 +85,8 @@ public class RedisConfig {
   }
 
   @Bean
-  public RedisTemplate<String, ProductLikeDto> redisTemplate(RedisConnectionFactory connectionFactory) {
-    RedisTemplate<String, ProductLikeDto> template = new RedisTemplate<>();
+  public RedisTemplate<String, ProductRankingDto> redisTemplate(RedisConnectionFactory connectionFactory) {
+    RedisTemplate<String, ProductRankingDto> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);
 
     // Configure ObjectMapper for JSON serialization
