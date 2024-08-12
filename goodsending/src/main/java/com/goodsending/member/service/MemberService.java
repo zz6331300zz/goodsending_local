@@ -198,7 +198,7 @@ public class MemberService {
     } catch (JwtException e) {
       throw CustomException.from(ExceptionCode.INVALID_TOKEN);
     }
-    
+
     // redis에 저장된 refresh token 가져오기
     String redisRefreshToken = saveRefreshTokenRepository.getValueByKey(email);
     if (redisRefreshToken == null) {
@@ -213,7 +213,7 @@ public class MemberService {
       throw CustomException.from(ExceptionCode.MEMBER_NOT_FOUND);
     }
     Member member = memberOptional.get();
-    
+
     // 새로운 Access Token 생성
     String newAccessToken = jwtUtil.createToken(member.getMemberId(), member.getEmail(),
         member.getRole());
@@ -228,7 +228,7 @@ public class MemberService {
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
       for (Cookie cookie : cookies) {
-        if ("refresh_token".equals(cookie.getName())) {
+        if (JwtUtil.REFRESH_TOKEN_NAME.equals(cookie.getName())) {
           return cookie.getValue();
         }
       }
@@ -257,11 +257,10 @@ public class MemberService {
     // redis에서 삭제
     saveRefreshTokenRepository.deleteByKey(email);
 
-    String cookieName = "refresh_token";
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
       for (Cookie cookie : cookies) {
-        if (cookie.getName().equals(cookieName)) {
+        if (cookie.getName().equals(JwtUtil.REFRESH_TOKEN_NAME)) {
           cookie.setMaxAge(0); // 쿠키 만료시간 0으로 설정
           cookie.setValue(null);
           cookie.setPath("/");
