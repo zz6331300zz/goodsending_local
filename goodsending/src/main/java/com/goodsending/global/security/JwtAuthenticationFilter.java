@@ -96,7 +96,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
   private void addCookie(HttpServletResponse response, String value) {
     Cookie cookie = new Cookie(JwtUtil.REFRESH_TOKEN_NAME, value);
     cookie.setHttpOnly(true);  // 자바스크립트에서 접근 불가
-    cookie.setSecure(true);    // HTTPS를 통해서만 전송
+    cookie.setSecure(false);    // HTTPS를 통해서만 전송
     cookie.setPath("/");       // 쿠키의 유효 범위 설정
     //cookie.setDomain(domain);  // 도메인 설정
     cookie.setMaxAge(1209600); // 만료 시간 설정 (14일 초 단위)
