@@ -8,6 +8,8 @@ import com.goodsending.product.dto.response.ProductSummaryDto;
 import com.goodsending.product.dto.response.QProductSummaryDto;
 import com.goodsending.product.entity.Product;
 import com.goodsending.product.type.ProductStatus;
+import com.goodsending.productlike.dto.ProductRankingDto;
+import com.goodsending.productlike.dto.QProductRankingDto;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -21,9 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.stereotype.Repository;
 
-@Repository
 @RequiredArgsConstructor
 public class ProductCustomRepositoryImpl implements ProductCustomRepository {
 
@@ -166,4 +166,21 @@ public class ProductCustomRepositoryImpl implements ProductCustomRepository {
     }
     return closedBuilder;
   }
+
+  @Override
+  public ProductRankingDto findRankingDtoById(Long productId) {
+    return jpaQueryFactory.select(new QProductRankingDto(
+            product.id,
+            product.name,
+            product.price,
+            product.startDateTime,
+            product.maxEndDateTime,
+            product.status,
+            productImage.url))
+        .from(product)
+        .leftJoin(productImage).on(productImage.product.eq(product))
+        .where(productImageEq().and(product.id.eq(productId)))
+        .fetchOne();
+  }
 }
+

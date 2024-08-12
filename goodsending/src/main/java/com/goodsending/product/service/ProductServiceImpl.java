@@ -1,5 +1,6 @@
 package com.goodsending.product.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.goodsending.bid.repository.ProductBidPriceMaxRepository;
 import com.goodsending.deposit.entity.Deposit;
 import com.goodsending.deposit.repository.DepositRepository;
@@ -22,6 +23,9 @@ import com.goodsending.product.entity.ProductImage;
 import com.goodsending.product.repository.ProductImageRepository;
 import com.goodsending.product.repository.ProductRepository;
 import com.goodsending.product.type.ProductStatus;
+import com.goodsending.productlike.dto.ProductRankingDto;
+import com.goodsending.productlike.repository.LikeCountRankingRepository;
+import com.goodsending.productlike.service.LikeService;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +60,8 @@ public class ProductServiceImpl implements ProductService {
   private final MemberRepository memberRepository;
   private final DepositRepository depositRepository;
   private final ProductBidPriceMaxRepository productBidPriceMaxRepository;
+  private final LikeService likeService;
+  private final LikeCountRankingRepository likeCountRankingRepository;
 
   /**
    * 상품 등록
@@ -154,7 +160,8 @@ public class ProductServiceImpl implements ProductService {
   @Override
   @Transactional
   public ProductUpdateResponseDto updateProduct(Long productId, ProductUpdateRequestDto requestDto,
-      List<MultipartFile> productImages, Long memberId, LocalDateTime now) {
+      List<MultipartFile> productImages, Long memberId, LocalDateTime now)
+      throws JsonProcessingException {
 
     // 등록된 상품인지 판별
     Product product = findProduct(productId);
@@ -195,10 +202,17 @@ public class ProductServiceImpl implements ProductService {
         savedProductImages.add(productImage);
       }
     }
+
+    ProductRankingDto dto = productRepository.findRankingDtoById(productId);
+    likeService.deleteLikeFromZSet(dto);
+
     productImageRepository.saveAll(savedProductImages);
 
-    // 상품 정보 수정
     product.update(requestDto);
+
+    ProductRankingDto productRankingDto = ProductRankingDto.of(product, savedProductImages.get(0));
+    likeCountRankingRepository.setZSetValue("ranking", productRankingDto,
+        product.getLikeCount());
 
     return ProductUpdateResponseDto.from(product, savedProductImages);
   }

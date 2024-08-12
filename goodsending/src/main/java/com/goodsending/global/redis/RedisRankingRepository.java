@@ -1,5 +1,6 @@
 package com.goodsending.global.redis;
 
+import com.goodsending.productlike.dto.ProductRankingDto;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -51,5 +52,9 @@ public abstract class RedisRankingRepository<K, V> {
     if (size != null && size > 0) {
       redisTemplate.opsForZSet().removeRange(PREFIX + key, 0, size - 1);
     }
+  }
+
+  public void deleteLikeFromZSet(K key, ProductRankingDto rankingDto) {
+    redisTemplate.opsForZSet().remove(PREFIX + key, rankingDto);
   }
 }

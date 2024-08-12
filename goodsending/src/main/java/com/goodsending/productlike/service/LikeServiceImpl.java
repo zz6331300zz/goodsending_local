@@ -1,5 +1,6 @@
 package com.goodsending.productlike.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goodsending.global.exception.CustomException;
 import com.goodsending.global.exception.ExceptionCode;
@@ -28,6 +29,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +48,7 @@ public class LikeServiceImpl implements LikeService {
   private final ProductImageRepository productImageRepository;
   private final LikeCountRankingRepository likeCountRankingRepository;
   private final ObjectMapper objectMapper;
+  private final RedisTemplate<String, ProductRankingDto> redisTemplate;
 
   /**
    * 찜하기 토글 기능
@@ -111,10 +115,8 @@ public class LikeServiceImpl implements LikeService {
    * @param size     한 페이지에 보여줄 상품 개수
    * @param sortBy   정렬 항목(id, title, price...)
    * @param isAsc    오름차순(true:오름차순 false:내림차순)
-   * @return 찜한 상품 목록 정보 : number:조회된 페이지 번호(0부터 시작), content:조회된 상품정보,
-   *  size: 한 페이지에 보여줄 상품개수,
-   *  numberOfElements:전체 상품 개수(회원이 등록한 모든 상품의 개수),
-   *  totalPages: 전체 페이지 수
+   * @return 찜한 상품 목록 정보 : number:조회된 페이지 번호(0부터 시작), content:조회된 상품정보, size: 한 페이지에 보여줄 상품개수,
+   * numberOfElements:전체 상품 개수(회원이 등록한 모든 상품의 개수), totalPages: 전체 페이지 수
    * @author : zz6331300zz
    */
 
@@ -129,6 +131,7 @@ public class LikeServiceImpl implements LikeService {
     Page<Product> productList = productRepository.findLikeProductByMember(member, pageable);
     return productList.map(ProductlikeCountDto::from);
   }
+
 
   /**
    * 찜하기 수 Top 5 상품 조회 기능(queryDSL 사용)
@@ -162,8 +165,9 @@ public class LikeServiceImpl implements LikeService {
     Product product = findProductById(requestDto.getProductId());
     ProductImage productImage = productImageRepository.findFirstByProduct(product);
     ProductRankingDto productRankingDto = new ProductRankingDto(product.getId(), product.getName(),
-        product.getStartDateTime(), product.getMaxEndDateTime(), product.getPrice(),
-        productImage.getUrl(), product.getStatus());
+        product.getPrice(), product.getStartDateTime(), product.getMaxEndDateTime(),
+        product.getStatus(),
+        productImage.getUrl());
     boolean likeButton = requestDto.isPress();
     Like like = null;
     boolean existingLike = likeRepository.existsByMemberAndProduct(member, product);
@@ -175,14 +179,12 @@ public class LikeServiceImpl implements LikeService {
         countLike(product);
         likeCountRankingRepository.setZSetValue("ranking", productRankingDto,
             product.getLikeCount());
-      }
-      else{
+      } else {
         likeCountRankingRepository.setZSetValue("ranking", productRankingDto,
             product.getLikeCount());
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).build();
       }
-    else {
+      return ResponseEntity.status(HttpStatus.CREATED).build();
+    } else {
       like = likeRepository.findLikeByMemberAndProduct(member,
           product).orElseThrow(() -> CustomException.from(ExceptionCode.MEMBER_NOT_FOUND));
       likeRepository.delete(like);
@@ -215,7 +217,8 @@ public class LikeServiceImpl implements LikeService {
           .limit(5)
           .map(tuple -> {
             Object value = tuple.getValue();
-            ProductRankingDto dto = convertMapToDto((Map<String, Object>) value); // Convert Map to DTO
+            ProductRankingDto dto = convertMapToDto(
+                (Map<String, Object>) value); // Convert Map to DTO
             if ("UPCOMING".equals(dto.getStatus().toString())) {
               return new ProductLikeWithScore(dto, tuple.getScore());
             } else {
@@ -241,5 +244,15 @@ public class LikeServiceImpl implements LikeService {
   @Override
   public void deleteTop5Likes() {
     likeCountRankingRepository.deleteZSetValue("ranking");
+  }
+
+  @Override
+  public void deleteLikeFromZSet(ProductRankingDto rankingDto) throws JsonProcessingException {
+    {
+      ZSetOperations<String, ProductRankingDto> zSetOperations = redisTemplate.opsForZSet();
+      // DTO를 직렬화하여 zset의 멤버로 사용
+      String serializedMember = objectMapper.writeValueAsString(rankingDto);
+      zSetOperations.remove("ranking", serializedMember);
+    }
   }
 }
