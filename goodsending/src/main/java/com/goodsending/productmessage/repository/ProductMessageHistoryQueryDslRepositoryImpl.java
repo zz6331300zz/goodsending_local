@@ -35,7 +35,8 @@ public class ProductMessageHistoryQueryDslRepositoryImpl implements ProductMessa
             productMessageHistory.member.memberId,
             productMessageHistory.product.id,
             productMessageHistory.message,
-            productMessageHistory.type
+            productMessageHistory.type,
+            productMessageHistory.createdDateTime
         ))
         .from(productMessageHistory)
         .innerJoin(productMessageHistory.product, product)

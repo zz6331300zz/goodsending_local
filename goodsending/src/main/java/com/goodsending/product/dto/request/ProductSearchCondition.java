@@ -2,9 +2,13 @@ package com.goodsending.product.dto.request;
 
 import com.goodsending.product.type.ProductStatus;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
+@Builder
 public class ProductSearchCondition {
 
   // 상품 등록 회원 아이디
@@ -28,7 +32,18 @@ public class ProductSearchCondition {
   // 사용자에게 응답해준 마지막 데이터의 식별자값
   private Long cursorId;
 
-  // 조회할 데이터 개수
-  private int size;
+  public static ProductSearchCondition of(Long memberId, boolean openProduct, boolean closedProduct,
+      String keyword, ProductStatus cursorStatus, LocalDateTime cursorStartDateTime,
+      Long cursorId) {
+    return ProductSearchCondition.builder()
+        .memberId(memberId)
+        .openProduct(openProduct)
+        .closedProduct(closedProduct)
+        .keyword(keyword)
+        .cursorStatus(cursorStatus)
+        .cursorStartDateTime(cursorStartDateTime)
+        .cursorId(cursorId)
+        .build();
+  }
 
 }

@@ -2,6 +2,7 @@ package com.goodsending.global.websocket.dto;
 
 import com.goodsending.productmessage.entity.ProductMessageHistory;
 import com.goodsending.productmessage.type.MessageType;
+import java.time.LocalDateTime;
 import lombok.Builder;
 
 /**
@@ -18,7 +19,8 @@ public record ProductMessageDto(
     int price,
     int biddingCount,
     int bidderCount,
-    MessageType type
+    MessageType type,
+    LocalDateTime createdDateTime
 ) {
   public static ProductMessageDto of(ProductMessageHistory history, int price){
     return ProductMessageDto.builder()
@@ -29,17 +31,11 @@ public record ProductMessageDto(
         .biddingCount(history.getProduct().getBiddingCount())
         .bidderCount(history.getProduct().getBidderCount())
         .type(history.getType())
+        .createdDateTime(history.getCreatedDateTime())
         .build();
   }
 
   public static ProductMessageDto of(ProductMessageHistory history){
-    return ProductMessageDto.builder()
-        .memberId(history.getMember().getMemberId())
-        .productId(history.getProduct().getId())
-        .message(history.getMessage())
-        .biddingCount(history.getProduct().getBiddingCount())
-        .bidderCount(history.getProduct().getBidderCount())
-        .type(history.getType())
-        .build();
+    return of(history, 0);
   }
 }
