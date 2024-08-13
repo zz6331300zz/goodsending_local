@@ -161,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
   @Transactional
   public ProductUpdateResponseDto updateProduct(Long productId, ProductUpdateRequestDto requestDto,
       List<MultipartFile> productImages, Long memberId, LocalDateTime now)
-      throws JsonProcessingException {
+  {
 
     // 등록된 상품인지 판별
     Product product = findProduct(productId);

@@ -28,5 +28,5 @@ public interface LikeService{
 
   void deleteTop5Likes();
 
-  void deleteLikeFromZSet(ProductRankingDto rankingDto) throws JsonProcessingException;
+  void deleteLikeFromZSet(ProductRankingDto rankingDto);
 }

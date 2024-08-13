@@ -105,7 +105,7 @@ public class ProductController {
                                     @RequestPart("requestDto") @Valid ProductUpdateRequestDto requestDto,
                                     @RequestPart("productImages") List<MultipartFile> productImages,
                                     @MemberId(required = true) Long memberId)
-      throws JsonProcessingException {
+  {
     LocalDateTime now = LocalDateTime.now();
     ProductUpdateResponseDto responseDto = productService.updateProduct(productId, requestDto, productImages, memberId, now);
     return ResponseEntity.status(HttpStatus.OK).body(responseDto);

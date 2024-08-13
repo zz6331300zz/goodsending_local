@@ -247,11 +247,16 @@ public class LikeServiceImpl implements LikeService {
   }
 
   @Override
-  public void deleteLikeFromZSet(ProductRankingDto rankingDto) throws JsonProcessingException {
+  public void deleteLikeFromZSet(ProductRankingDto rankingDto) {
     {
       ZSetOperations<String, ProductRankingDto> zSetOperations = redisTemplate.opsForZSet();
       // DTO를 직렬화하여 zset의 멤버로 사용
-      String serializedMember = objectMapper.writeValueAsString(rankingDto);
+      String serializedMember = null;
+      try {
+        serializedMember = objectMapper.writeValueAsString(rankingDto);
+      } catch (JsonProcessingException e) {
+        throw CustomException.from(ExceptionCode.LIKE_NOT_FOUND);
+      }
       zSetOperations.remove("ranking", serializedMember);
     }
   }
