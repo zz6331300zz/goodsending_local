@@ -15,16 +15,15 @@ import com.goodsending.member.type.MemberRole;
 import com.goodsending.member.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -182,83 +181,59 @@ public class MemberService {
    * <p>
    * Access Token이 만료 된 회원은 Refresh Token 기간이 남아 있다면 재발급 받을 수 있다.
    *
-   * @param email, HttpServletRequest
+   * @param refreshToken
    * @return status 상태코드 반환합니다.
    * @author : 이아람
    */
-  public ResponseEntity<Void> tokenReissue(HttpServletRequest request) {
-    // 쿠키에서 refresh token 가져오기
-    String cookieRefreshToken = getRefreshTokenFromCookie(request);
-    log.info("재발급 3 : " + cookieRefreshToken);
-
-    if (cookieRefreshToken == null) {
-      log.error("재발급 3번 에러 cookieRefreshToken is null");
-      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
-    }
+  public ResponseEntity<Void> tokenReissue(String refreshToken) {
     // 쿠키에서 가져온 refresh token에서 email 정보 추출
     String email;
     try {
-      Claims claims = jwtUtil.getUserInfoFromToken(cookieRefreshToken);
+      Claims claims = jwtUtil.getUserInfoFromToken(refreshToken);
       email = claims.getSubject();
-      log.info("재발급 4 : " + email);
+      log.info("재발급 1 : " + email);
 
     } catch (JwtException e) {
-      log.error("재발급 4번 에러 email 추출 실패");
+      log.error("재발급 1번 에러 email 추출 실패");
       throw CustomException.from(ExceptionCode.INVALID_TOKEN);
     }
 
     // redis에 저장된 refresh token 가져오기
     String redisRefreshToken = saveRefreshTokenRepository.getValueByKey(email);
-    log.info("재발급 5 : " + redisRefreshToken);
+    log.info("재발급 2 : " + redisRefreshToken);
 
     if (redisRefreshToken == null) {
-      log.error("재발급 5번 에러 redisRefreshToken is null");
+      log.error("재발급 2번 에러 redisRefreshToken is null");
       throw CustomException.from(ExceptionCode.STORED_TOKEN_HAS_EXPIRED);
     }
 
-    if (!cookieRefreshToken.equals(redisRefreshToken)) {
-      log.error("재발급 5번 에러 저장된 refresh 토큰과 쿠키 토큰 불일치");
+    if (!refreshToken.equals(redisRefreshToken)) {
+      log.error("재발급 2번 에러 저장된 refresh 토큰과 쿠키 토큰 불일치");
       throw CustomException.from(ExceptionCode.TOKEN_MISMATCH);
     }
 
     Optional<Member> memberOptional = memberRepository.findByEmail(email);
-    log.info("재발급 6 : " + memberOptional.isPresent());
+    log.info("재발급 3 : " + memberOptional.isPresent());
 
     if (memberOptional.isEmpty()) {
-      log.error("재발급 6번 에러 memberOptional is Empty");
+      log.error("재발급 3번 에러 memberOptional is Empty");
       throw CustomException.from(ExceptionCode.MEMBER_NOT_FOUND);
     }
 
     Member member = memberOptional.get();
-    log.info("재발급 7 : " + member);
+    log.info("재발급 4 : " + member);
 
     // 새로운 Access Token 생성
     String newAccessToken = jwtUtil.createToken(member.getMemberId(), member.getEmail(),
         member.getRole());
-    log.info("재발급 8 : " + newAccessToken);
+    log.info("재발급 5 : " + newAccessToken);
 
     // header에 추가
     HttpHeaders header = new HttpHeaders();
     header.set(JwtUtil.AUTHORIZATION_HEADER, newAccessToken);
-    log.info("재발급 9 : " + header);
+    log.info("재발급 6 : " + header);
 
     return new ResponseEntity<>(header, HttpStatus.OK);
-  }
-
-  // 쿠키에서 Refresh Token 추출
-  private String getRefreshTokenFromCookie(HttpServletRequest request) {
-    Cookie[] cookies = request.getCookies();
-    log.info("재발급, 로그아웃1 : " + Arrays.toString(cookies));
-
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if (JwtUtil.REFRESH_TOKEN_NAME.equals(cookie.getName())) {
-          log.info("재발급, 로그아웃2 : " + cookie.getValue());
-          return cookie.getValue();
-        }
-      }
-    }
-    return null;
   }
 
   /**
@@ -266,42 +241,31 @@ public class MemberService {
    * <p>
    * Refresh Token 삭제 & Access Token blacklist에 저장 및 사용 불가된다.
    *
-   * @param HttpServletRequest, HttpServletResponse
+   * @param refreshToken, HttpServletRequest, HttpServletResponse
    * @return status 상태코드 반환합니다.
    * @author : 이아람
    */
-  public ResponseEntity<Void> deleteRefreshToken(HttpServletRequest request, HttpServletResponse response) {
-    // 쿠키에서 refresh token 가져오기
-    String cookieRefreshToken = getRefreshTokenFromCookie(request);
-    log.info("로그아웃 3 : " + cookieRefreshToken);
-
-    if (cookieRefreshToken == null) {
-      log.error("로그아웃 3번 에러 cookieRefreshToken is null");
-      throw CustomException.from(ExceptionCode.INVALID_TOKEN);
-    }
+  public ResponseEntity<Void> deleteRefreshToken(String refreshToken, HttpServletRequest request,
+      HttpServletResponse response) {
     // email 추출
-    Claims claims = jwtUtil.getUserInfoFromToken(cookieRefreshToken);
+    Claims claims = jwtUtil.getUserInfoFromToken(refreshToken);
     String email = claims.getSubject();
-    log.info("로그아웃 4 : " + email);
+    log.info("로그아웃 1 : " + email);
     // redis에서 삭제
     saveRefreshTokenRepository.deleteByKey(email);
+    // refresh token 만료 시간 0으로 변경 = 삭제
+    ResponseCookie cookie = ResponseCookie.from(JwtUtil.REFRESH_TOKEN_NAME)
+        .httpOnly(true)
+        .secure(true)
+        .sameSite("None")
+        .path("/")
+        .maxAge(0)
+        .build();
+    // Response Header에 쿠키 추가
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-    Cookie[] cookies = request.getCookies();
-    log.info("로그아웃 5 : " + Arrays.toString(cookies));
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if (cookie.getName().equals(JwtUtil.REFRESH_TOKEN_NAME)) {
-          cookie.setMaxAge(0); // 쿠키 만료시간 0으로 설정
-          cookie.setValue(null);
-          cookie.setPath("/");
-          response.addCookie(cookie);
-          log.info("로그아웃 6 : " + cookie.getValue());
-          break;
-        }
-      }
-    }
     String accessToken = jwtUtil.getJwtFromHeader(request);
-    log.info("로그아웃 7 : " + accessToken);
+    log.info("로그아웃 2 : " + accessToken);
     // access token 만료 시간 계산
     long expirationTime = jwtUtil.getExpirationTime(accessToken) - System.currentTimeMillis();
     blackListAccessTokenRepository.setValue(accessToken, "true", Duration.ofMillis(expirationTime));
