@@ -71,22 +71,18 @@ public class Member extends BaseEntity {
     this.password = encodedPassword;
   }
 
-  public void cashUpdate(Integer cash) {
+  public void cashUpdate(int cash) {
     this.cash = cash;
   }
 
-  public boolean isCashGreaterOrEqualsThan(Integer amount){
-    if (this.cash == null || amount == null) {
-      return false;
-    }
-    return this.cash >= amount;
+  public boolean isCashGreaterOrEqualsThan(int amount){
+    int effectiveCash = (this.cash != null) ? this.cash : 0;
+    return effectiveCash >= amount;
   }
 
-  public boolean isPointGreaterOrEqualsThan(Integer amount){
-    if(this.point == null || amount == null) {
-      return false;
-    }
-    return this.point >= amount;
+  public boolean isPointGreaterOrEqualsThan(int amount){
+    int effectivePoint = (this.point != null) ? this.point : 0;
+    return effectivePoint >= amount;
   }
 
   public void addCash(int cash) {
@@ -105,17 +101,23 @@ public class Member extends BaseEntity {
     this.point += point;
   }
 
-  public void deductCash(Integer amount) {
+  public void deductCash(int amount) {
     if(!this.isCashGreaterOrEqualsThan(amount)){
       throw CustomException.from(ExceptionCode.USER_CASH_MUST_BE_POSITIVE);
+    }
+    if(this.cash == null){
+      this.cash = 0;
     }
 
     this.cash -= amount;
   }
 
-  public void deductPoint(Integer amount) {
+  public void deductPoint(int amount) {
     if (!this.isPointGreaterOrEqualsThan(amount)) {
       throw CustomException.from(ExceptionCode.USER_POINT_MUST_BE_POSITIVE);
+    }
+    if(this.point == null){
+      this.point = 0;
     }
 
     this.point -= amount;
