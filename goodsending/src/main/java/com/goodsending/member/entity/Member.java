@@ -39,10 +39,10 @@ public class Member extends BaseEntity {
   private String password;
 
   @Column(name = "cash", nullable = true)
-  private Integer cash;
+  private Integer cash = 0;
 
   @Column(name = "point", nullable = true)
-  private Integer point;
+  private Integer point = 0;
 
   @Column(name = "role", nullable = false)
   @Enumerated(value = EnumType.STRING)
