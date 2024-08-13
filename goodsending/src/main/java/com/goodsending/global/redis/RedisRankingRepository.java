@@ -17,15 +17,6 @@ public abstract class RedisRankingRepository<K, V> {
         .add(PREFIX + key, value, score);
   }
 
-  public void setHashValue(K key, String hashKey, V value) {
-    redisTemplate.opsForHash().put(PREFIX + key, hashKey, value);
-  }
-
-  public String getHashValueByKey(K key, String hashKey) {
-    return (String) redisTemplate.opsForHash()
-        .get(PREFIX + key, hashKey);
-  }
-
   public Set<TypedTuple<V>> getZSetTupleByKey(K key, long start, long end) {
     return redisTemplate.opsForZSet().rangeWithScores(PREFIX + key, start, end);
   }
@@ -53,7 +44,6 @@ public abstract class RedisRankingRepository<K, V> {
       redisTemplate.opsForZSet().removeRange(PREFIX + key, 0, size - 1);
     }
   }
-
   public void deleteLikeFromZSet(K key, ProductRankingDto rankingDto) {
     redisTemplate.opsForZSet().remove(PREFIX + key, rankingDto);
   }
